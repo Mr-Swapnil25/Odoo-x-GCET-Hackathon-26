@@ -313,31 +313,6 @@ yarn dev
 
 ---
 
-## 📸 Screenshots
-
-<div align="center">
-
-### 🔐 Authentication
-
-| Login Page | Sign Up Page |
-|:----------:|:------------:|
-| ![Login](https://via.placeholder.com/400x250/1e1b4b/ffffff?text=Login+Page) | ![SignUp](https://via.placeholder.com/400x250/1e1b4b/ffffff?text=Sign+Up+Page) |
-
-### 🎨 Role-Based Dashboards
-
-| Admin Dashboard (Blue Theme) | Employee Dashboard (Purple Theme) |
-|:----------------------------:|:---------------------------------:|
-| ![Admin](https://via.placeholder.com/400x250/1e40af/ffffff?text=Admin+Dashboard) | ![Employee](https://via.placeholder.com/400x250/7c3aed/ffffff?text=Employee+Dashboard) |
-
-### 📱 Responsive Design
-
-| Desktop | Tablet | Mobile |
-|:-------:|:------:|:------:|
-| ![Desktop](https://via.placeholder.com/250x150/0f172a/ffffff?text=Desktop) | ![Tablet](https://via.placeholder.com/200x150/0f172a/ffffff?text=Tablet) | ![Mobile](https://via.placeholder.com/150x200/0f172a/ffffff?text=Mobile) |
-
-</div>
-
----
 
 ## 🏗️ Project Structure
 
