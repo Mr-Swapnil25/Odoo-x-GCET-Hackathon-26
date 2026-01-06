@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStore } from '../store';
 import { Role } from '../types';
 import { InteractiveCard } from '../components/InteractiveCard';
-import { cn, useRoleTheme } from '../components/UI';
+import { cn, useRoleTheme, Input } from '../components/UI';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { 
   User, Mail, Phone, MapPin, Briefcase, Calendar, Edit2, BadgeCheck, 
   FileText, Lock, Wallet, Shield, Heart, Gamepad2, Zap, Award, 
   Plus, Eye, EyeOff, Building2, CreditCard, Star, Laptop, Smartphone,
-  Monitor, Check, X, Trash2
+  Monitor, Check, X, Trash2, Clock, IndianRupee, Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 type TabType = 'resume' | 'private' | 'salary' | 'security';
+
+// Salary calculation constants based on wireframe
+const SALARY_CONFIG = {
+  basicPercentage: 50, // 50% of wage
+  hraPercentage: 50, // 50% of Basic
+  standardAllowancePercentage: 16.67,
+  performanceBonusPercentage: 8.33,
+  ltaPercentage: 8.333,
+  pfRate: 12, // 12% for both employee and employer
+  professionalTax: 200,
+};
 
 interface Skill {
   name: string;
@@ -33,6 +44,14 @@ export const Profile = () => {
   const [activeTab, setActiveTab] = useState<TabType>('resume');
   const [showAccountNumber, setShowAccountNumber] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  
+  // Wage state for admin editing
+  const [monthlyWage, setMonthlyWage] = useState(50000);
+  const [workingDaysPerWeek, setWorkingDaysPerWeek] = useState(5);
+  const [breakTimeHours, setBreakTimeHours] = useState(1);
+  
+  // Check if current user is admin
+  const isAdmin = currentUser?.role === Role.ADMIN;
   
   // Skills State
   const [skills, setSkills] = useState<Skill[]>([
@@ -141,30 +160,66 @@ export const Profile = () => {
     ],
   };
 
-  // Calculate salary breakdown
+  // Calculate salary breakdown based on wireframe specifications
+  const calculatedSalary = useMemo(() => {
+    const wage = monthlyWage;
+    const basic = Math.round(wage * (SALARY_CONFIG.basicPercentage / 100));
+    const hra = Math.round(basic * (SALARY_CONFIG.hraPercentage / 100));
+    const standardAllowance = Math.round(wage * (SALARY_CONFIG.standardAllowancePercentage / 100));
+    const performanceBonus = Math.round(wage * (SALARY_CONFIG.performanceBonusPercentage / 100));
+    const lta = Math.round(wage * (SALARY_CONFIG.ltaPercentage / 100));
+    const totalComponents = basic + hra + standardAllowance + performanceBonus + lta;
+    const fixedAllowance = Math.max(0, wage - totalComponents);
+    
+    // PF Calculations
+    const employeePF = Math.round(basic * (SALARY_CONFIG.pfRate / 100));
+    const employerPF = Math.round(basic * (SALARY_CONFIG.pfRate / 100));
+    
+    return {
+      wage,
+      yearlyWage: wage * 12,
+      basic,
+      hra,
+      standardAllowance,
+      performanceBonus,
+      lta,
+      fixedAllowance,
+      employeePF,
+      employerPF,
+      professionalTax: SALARY_CONFIG.professionalTax,
+    };
+  }, [monthlyWage]);
+
   const salaryBreakdown = [
-    { name: 'Basic Salary', percentage: '50%', amount: employee.salary.basic },
-    { name: 'House Rent Allowance (HRA)', percentage: '25%', amount: employee.salary.hra },
-    { name: 'Special Allowance', percentage: '20%', amount: employee.salary.allowances },
-    { name: 'Medical Allowance', percentage: '5%', amount: Math.round(employee.salary.basic * 0.1) },
+    { name: 'Basic Salary', percentage: `${SALARY_CONFIG.basicPercentage}%`, amount: calculatedSalary.basic, description: 'Define Basic salary from company cost compute it based on monthly wages' },
+    { name: 'House Rent Allowance', percentage: `${SALARY_CONFIG.hraPercentage}%`, amount: calculatedSalary.hra, description: 'HRA provided to employees 50% of the basic salary' },
+    { name: 'Standard Allowance', percentage: `${SALARY_CONFIG.standardAllowancePercentage}%`, amount: calculatedSalary.standardAllowance, description: 'A standard allowance is a predetermined, fixed amount provided to employee as part of their salary' },
+    { name: 'Performance Bonus', percentage: `${SALARY_CONFIG.performanceBonusPercentage}%`, amount: calculatedSalary.performanceBonus, description: 'Variable amount paid during payroll. The value defined by the company and calculated as a % of the basic salary' },
+    { name: 'Leave Travel Allowance', percentage: `${SALARY_CONFIG.ltaPercentage}%`, amount: calculatedSalary.lta, description: 'LTA is paid by the company to employees to cover their travel expenses, and calculated as a % of the basic salary' },
+    { name: 'Fixed Allowance', percentage: `${((calculatedSalary.fixedAllowance / calculatedSalary.wage) * 100).toFixed(2)}%`, amount: calculatedSalary.fixedAllowance, description: 'Fixed allowance portion of wages is determined after calculating all salary components' },
   ];
 
-  const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
-    { id: 'resume', label: 'Resume', icon: <FileText className="w-5 h-5" /> },
-    { id: 'private', label: 'Private Info', icon: <Lock className="w-5 h-5" /> },
-    { id: 'salary', label: 'Salary Info', icon: <Wallet className="w-5 h-5" /> },
-    { id: 'security', label: 'Security', icon: <Shield className="w-5 h-5" /> },
-  ];
+  // Tabs - Salary Info only visible to Admin
+  const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = isAdmin
+    ? [
+        { id: 'resume', label: 'Resume', icon: <FileText className="w-5 h-5" /> },
+        { id: 'private', label: 'Private Info', icon: <Lock className="w-5 h-5" /> },
+        { id: 'salary', label: 'Salary Info', icon: <Wallet className="w-5 h-5" /> },
+        { id: 'security', label: 'Security', icon: <Shield className="w-5 h-5" /> },
+      ]
+    : [
+        { id: 'resume', label: 'Resume', icon: <FileText className="w-5 h-5" /> },
+        { id: 'private', label: 'Private Info', icon: <Lock className="w-5 h-5" /> },
+        { id: 'security', label: 'Security', icon: <Shield className="w-5 h-5" /> },
+      ];
 
   return (
     <div className="p-4 lg:p-8">
       {/* Main Content */}
       <div className="flex flex-col max-w-[1200px] mx-auto w-full gap-6">
-          {/* Breadcrumbs */}
-          <div className="flex flex-wrap gap-2 px-1">
-            <span className="text-[#a090cb] text-sm font-medium leading-normal hover:text-[#6e3df5] transition-colors cursor-pointer">Dashboard</span>
-            <span className="text-[#a090cb] text-sm font-medium leading-normal">/</span>
-            <span className="text-white text-sm font-medium leading-normal">My Profile</span>
+          {/* Page Title */}
+          <div className="mb-2">
+            <h1 className="text-2xl font-bold text-white">My Profile</h1>
           </div>
 
           {/* Profile Header */}
@@ -172,71 +227,84 @@ export const Profile = () => {
             {/* Abstract BG Decoration */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-[#6e3df5]/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
             
-            <div className="flex flex-col md:flex-row gap-8 items-center md:items-start relative z-10">
-              {/* Avatar with Gradient Ring */}
-              <div className="relative shrink-0">
-                <div className="relative p-[3px] rounded-full bg-gradient-to-br from-[#6e3df5] via-cyan-400 to-[#6e3df5]">
-                  <div className="h-[120px] w-[120px] rounded-full border-4 border-[#151022] bg-gradient-to-br from-[#6e3df5] to-purple-600 flex items-center justify-center text-white text-4xl font-bold">
-                    {employee.firstName[0]}{employee.lastName[0]}
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="absolute bottom-1 right-1 bg-[#151022] rounded-full p-1.5 border border-[#2d2249] cursor-pointer hover:border-[#6e3df5] transition-colors group/edit"
-                >
-                  <Edit2 className="w-[18px] h-[18px] text-white group-hover/edit:text-[#6e3df5] transition-colors" />
-                </button>
-              </div>
-
-              {/* Info */}
-              <div className="flex flex-col flex-1 text-center md:text-left w-full">
-                <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-4 w-full">
-                  <div>
-                    <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">
-                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-[#a090cb]">
-                        {employee.firstName} {employee.lastName}
-                      </span>
-                    </h1>
-                    <p className="text-[#a090cb] text-lg font-medium mb-3">
-                      {employee.designation} | {employee.department}
-                    </p>
-                    <div className="flex flex-wrap gap-3 justify-center md:justify-start items-center">
-                      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#6e3df5]/10 border border-[#6e3df5]/20 shadow-[0_0_10px_rgba(110,61,245,0.2)]">
-                        <BadgeCheck className="w-4 h-4 text-[#6e3df5]" />
-                        <span className="text-[#6e3df5] text-xs font-bold tracking-wide">ID: {employee.id}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-[#a090cb] text-sm">
-                        <MapPin className="w-[18px] h-[18px]" />
-                        {employee.address.split(',').slice(-2).join(',')}
-                      </div>
+            <div className="flex flex-col lg:flex-row gap-8 relative z-10">
+              {/* Left Section - Avatar and Basic Info */}
+              <div className="flex flex-col md:flex-row gap-6 items-center md:items-start flex-1">
+                {/* Avatar with Gradient Ring */}
+                <div className="relative shrink-0">
+                  <div className="relative p-[3px] rounded-full bg-gradient-to-br from-[#6e3df5] via-cyan-400 to-[#6e3df5]">
+                    <div className="h-[100px] w-[100px] rounded-full border-4 border-[#151022] bg-gradient-to-br from-[#6e3df5] to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
+                      {employee.firstName[0]}{employee.lastName[0]}
                     </div>
                   </div>
                   <button 
                     onClick={() => setIsEditing(!isEditing)}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2d2249]/50 hover:bg-[#2d2249] border border-[#403168] hover:border-[#6e3df5]/50 text-white text-sm font-semibold transition-all duration-300 shadow-lg hover:shadow-[0_0_10px_-2px_rgba(110,61,245,0.3)]"
+                    className="absolute bottom-1 right-1 bg-[#151022] rounded-full p-1.5 border border-[#2d2249] cursor-pointer hover:border-[#6e3df5] transition-colors group/edit"
                   >
-                    <Edit2 className="w-[18px] h-[18px]" />
-                    {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+                    <Edit2 className="w-4 h-4 text-white group-hover/edit:text-[#6e3df5] transition-colors" />
                   </button>
+                </div>
+
+                {/* Name and Basic Details */}
+                <div className="flex flex-col text-center md:text-left">
+                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-[#a090cb]">
+                      {employee.firstName} {employee.lastName}
+                    </span>
+                  </h1>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-[#a090cb] flex items-center gap-2 justify-center md:justify-start">
+                      <Briefcase className="w-4 h-4 text-[#564a75]" />
+                      <span>{employee.designation}</span>
+                    </p>
+                    <p className="text-[#a090cb] flex items-center gap-2 justify-center md:justify-start">
+                      <Mail className="w-4 h-4 text-[#564a75]" />
+                      {employee.email}
+                    </p>
+                    <p className="text-[#a090cb] flex items-center gap-2 justify-center md:justify-start">
+                      <Phone className="w-4 h-4 text-[#564a75]" />
+                      {employee.phone || '+91 9876543210'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Section - Company Details */}
+              <div className="grid grid-cols-2 gap-4 border-l-0 lg:border-l border-[#2d2249] lg:pl-8">
+                <div>
+                  <label className="text-xs text-[#a090cb] uppercase font-semibold">Company</label>
+                  <p className="text-white font-medium">{employee.companyName || 'Dayflow Inc.'}</p>
+                </div>
+                <div>
+                  <label className="text-xs text-[#a090cb] uppercase font-semibold">Department</label>
+                  <p className="text-white font-medium">{employee.department}</p>
+                </div>
+                <div>
+                  <label className="text-xs text-[#a090cb] uppercase font-semibold">Manager</label>
+                  <p className="text-white font-medium">John Smith</p>
+                </div>
+                <div>
+                  <label className="text-xs text-[#a090cb] uppercase font-semibold">Location</label>
+                  <p className="text-white font-medium">{employee.address.split(',').slice(-2).join(',') || 'Kolkata, India'}</p>
                 </div>
               </div>
             </div>
           </InteractiveCard>
 
           {/* Tabs Navigation */}
-          <div className="w-full border-b border-[#2d2249]">
-            <nav aria-label="Tabs" className="flex gap-8 overflow-x-auto scrollbar-hide">
+          <div className="mb-2">
+            <nav className="flex gap-1 p-1 bg-[#151022]/60 rounded-xl border border-[#2d2249] inline-flex">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`group flex items-center gap-2 border-b-[3px] pb-3 px-1 pt-2 text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     activeTab === tab.id 
-                      ? 'border-[#6e3df5] text-white' 
-                      : 'border-transparent text-[#a090cb] hover:text-white hover:border-[#403168]'
+                      ? 'bg-[#2d2249] text-white shadow-lg' 
+                      : 'text-[#a090cb] hover:text-white hover:bg-[#1e1730]'
                   }`}
                 >
-                  <span className={`transition-colors ${activeTab === tab.id ? 'text-[#6e3df5]' : 'group-hover:text-white'}`}>
+                  <span className={activeTab === tab.id ? 'text-[#6e3df5]' : ''}>
                     {tab.icon}
                   </span>
                   {tab.label}
@@ -499,226 +567,226 @@ export const Profile = () => {
             {/* Private Info Tab */}
             {activeTab === 'private' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
-                {/* Personal Details Form */}
-                <InteractiveCard interactiveColor="#6e3df5" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-6">
-                  <div className="flex items-center gap-3 mb-6 border-b border-[#2d2249] pb-4">
-                    <div className="p-2 rounded-lg bg-[#6e3df5]/10 text-[#6e3df5]">
-                      <BadgeCheck className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-lg font-bold text-white">Personal Details</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="col-span-1">
-                      <label className="block text-sm font-medium text-[#a090cb] mb-1.5">Date of Birth</label>
-                      <input 
-                        readOnly 
-                        value={employee.dob}
-                        className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 placeholder-[#564a75]"
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <label className="block text-sm font-medium text-[#a090cb] mb-1.5">Gender</label>
-                      <select className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 appearance-none">
-                        <option>{employee.gender}</option>
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Non-binary</option>
-                      </select>
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
-                      <label className="block text-sm font-medium text-[#a090cb] mb-1.5">Residing Address</label>
-                      <textarea 
-                        defaultValue={employee.address}
-                        className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 placeholder-[#564a75] resize-none h-24"
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <label className="block text-sm font-medium text-[#a090cb] mb-1.5">Nationality</label>
-                      <input 
-                        type="text" 
-                        defaultValue="Indian"
-                        className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 placeholder-[#564a75]"
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <label className="block text-sm font-medium text-[#a090cb] mb-1.5">Marital Status</label>
-                      <select className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 appearance-none">
-                        <option>Single</option>
-                        <option>Married</option>
-                      </select>
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
-                      <label className="block text-sm font-medium text-[#a090cb] mb-1.5">Personal Email</label>
-                      <input 
-                        type="email" 
-                        defaultValue={employee.email}
-                        className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 placeholder-[#564a75]"
-                      />
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
-                      <label className="block text-sm font-medium text-[#a090cb] mb-1.5">Date of Joining</label>
-                      <div className="relative">
-                        <input 
-                          type="text" 
-                          readOnly
-                          defaultValue={employee.joinDate}
-                          className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 placeholder-[#564a75]"
-                        />
-                        <Calendar className="absolute right-4 top-3 w-5 h-5 text-[#a090cb]" />
+                {/* Personal Details */}
+                <InteractiveCard interactiveColor="#6e3df5" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-6 lg:p-8">
+                  <h3 className="text-lg font-bold text-white mb-6 pb-4 border-b border-[#2d2249]">Personal Details</h3>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-sm text-[#564a75]">Date of Birth</label>
+                        <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white">{employee.dob}</span></div>
                       </div>
+                      <div className="space-y-2">
+                        <label className="text-sm text-[#564a75]">Gender</label>
+                        <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white">{employee.gender}</span></div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#564a75]">Residing Address</label>
+                      <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white">{employee.address || 'Not provided'}</span></div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-sm text-[#564a75]">Nationality</label>
+                        <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white">Indian</span></div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm text-[#564a75]">Marital Status</label>
+                        <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white">Single</span></div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#564a75]">Personal Email</label>
+                      <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white">{employee.email}</span></div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#564a75]">Date of Joining</label>
+                      <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white">{employee.joinDate}</span></div>
                     </div>
                   </div>
                 </InteractiveCard>
 
-                {/* Bank Details Form */}
-                <InteractiveCard interactiveColor="#10b981" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-6">
-                  <div className="flex items-center gap-3 mb-6 border-b border-[#2d2249] pb-4">
-                    <div className="p-2 rounded-lg bg-[#6e3df5]/10 text-[#6e3df5]">
-                      <Building2 className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-lg font-bold text-white">Bank & Tax Details</h3>
-                  </div>
-                  <div className="grid grid-cols-1 gap-5">
-                    <div>
-                      <label className="block text-sm font-medium text-[#a090cb] mb-1.5">Bank Name</label>
-                      <input 
-                        type="text" 
-                        defaultValue={profileData.bankDetails.bankName}
-                        className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 placeholder-[#564a75]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#a090cb] mb-1.5">Account Number</label>
-                      <div className="relative">
-                        <input 
-                          type={showAccountNumber ? 'text' : 'password'}
-                          defaultValue="123456789012"
-                          className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 placeholder-[#564a75] tracking-widest"
-                        />
-                        <button 
-                          onClick={() => setShowAccountNumber(!showAccountNumber)}
-                          className="absolute right-4 top-3 text-[#a090cb] cursor-pointer hover:text-white"
-                        >
-                          {showAccountNumber ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                {/* Bank Details */}
+                <InteractiveCard interactiveColor="#10b981" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-6 lg:p-8">
+                  <h3 className="text-lg font-bold text-white mb-6 pb-4 border-b border-[#2d2249]">Bank Details</h3>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#564a75]">Account Number</label>
+                      <div className="border-b-2 border-[#2d2249] pb-2 flex items-center justify-between">
+                        <span className="text-white font-mono tracking-wider">{showAccountNumber ? '123456789012' : '••••••••9012'}</span>
+                        <button onClick={() => setShowAccountNumber(!showAccountNumber)} className="text-[#564a75] hover:text-white transition-colors">
+                          {showAccountNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-[#a090cb] mb-1.5">IFSC Code</label>
-                        <input 
-                          type="text" 
-                          defaultValue={profileData.bankDetails.ifsc}
-                          className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 placeholder-[#564a75]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-[#a090cb] mb-1.5">PAN No.</label>
-                        <input 
-                          type="text" 
-                          defaultValue={profileData.bankDetails.pan}
-                          className="w-full bg-[#1e1730] border border-white/[0.08] text-white rounded-lg px-4 py-3 focus:outline-none focus:border-[#6e3df5] focus:ring-1 focus:ring-[#6e3df5] transition-all duration-200 placeholder-[#564a75]"
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#564a75]">Bank Name</label>
+                      <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white">{profileData.bankDetails.bankName}</span></div>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-[#2d2249]">
-                      <button className="w-full bg-[#6e3df5] hover:bg-[#6e3df5]/80 text-white font-bold py-3 rounded-lg shadow-[0_0_20px_-5px_rgba(110,61,245,0.4)] transition-all">
-                        Update Information
-                      </button>
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#564a75]">IFSC Code</label>
+                      <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white font-mono">{profileData.bankDetails.ifsc}</span></div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#564a75]">PAN No</label>
+                      <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white font-mono">{profileData.bankDetails.pan}</span></div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#564a75]">UAN NO</label>
+                      <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white font-mono">101234567890</span></div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm text-[#564a75]">Emp Code</label>
+                      <div className="border-b-2 border-[#2d2249] pb-2"><span className="text-white font-mono">{employee.id}</span></div>
                     </div>
                   </div>
                 </InteractiveCard>
               </div>
             )}
 
-            {/* Salary Info Tab */}
-            {activeTab === 'salary' && (
+            {/* Salary Info Tab - Admin Only */}
+            {activeTab === 'salary' && isAdmin && (
               <div className="flex flex-col gap-6 animate-fadeIn">
-                {/* Top Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <InteractiveCard interactiveColor="#6e3df5" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-6 flex items-center justify-between group">
-                    <div>
-                      <p className="text-[#a090cb] text-sm font-medium mb-1">Monthly Wage</p>
-                      <h2 className="text-3xl font-bold text-white group-hover:text-[#6e3df5] transition-colors">
-                        ₹{employee.salary.netSalary.toLocaleString()}
-                      </h2>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-[#6e3df5]/20 flex items-center justify-center">
-                      <Wallet className="w-6 h-6 text-[#6e3df5]" />
-                    </div>
-                  </InteractiveCard>
-                  <InteractiveCard interactiveColor="#10b981" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-6 flex items-center justify-between group">
-                    <div>
-                      <p className="text-[#a090cb] text-sm font-medium mb-1">Yearly CTC</p>
-                      <h2 className="text-3xl font-bold text-white group-hover:text-[#6e3df5] transition-colors">
-                        ₹{(employee.salary.netSalary * 12).toLocaleString()}
-                      </h2>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
+                {/* Top Section - Wage Info and Working Schedule */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Wage Cards */}
+                  <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InteractiveCard interactiveColor="#6e3df5" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-5">
+                      <label className="text-[#a090cb] text-sm font-medium mb-2 block">Month Wage</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          value={monthlyWage}
+                          onChange={(e) => setMonthlyWage(Number(e.target.value))}
+                          className="text-2xl font-bold text-white bg-transparent border-b border-[#2d2249] focus:border-[#6e3df5] outline-none w-32 text-right"
+                        />
+                        <span className="text-[#a090cb]">/ Month</span>
+                      </div>
+                    </InteractiveCard>
+                    <InteractiveCard interactiveColor="#10b981" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-5">
+                      <label className="text-[#a090cb] text-sm font-medium mb-2 block">Yearly Wage</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-white">
+                          {calculatedSalary.yearlyWage.toLocaleString()}
+                        </span>
+                        <span className="text-[#a090cb]">/ Yearly</span>
+                      </div>
+                    </InteractiveCard>
+                  </div>
+                  
+                  {/* Working Schedule */}
+                  <InteractiveCard interactiveColor="#8055f6" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-5">
+                    <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-[#6e3df5]" /> Working Schedule
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#a090cb] text-sm">No of working days in a week:</span>
+                        <input
+                          type="number"
+                          value={workingDaysPerWeek}
+                          onChange={(e) => setWorkingDaysPerWeek(Number(e.target.value))}
+                          className="w-12 text-center bg-[#1e1730] border border-[#2d2249] rounded text-white px-2 py-1"
+                          min={1}
+                          max={7}
+                        />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#a090cb] text-sm">Break Time:</span>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            value={breakTimeHours}
+                            onChange={(e) => setBreakTimeHours(Number(e.target.value))}
+                            className="w-12 text-center bg-[#1e1730] border border-[#2d2249] rounded text-white px-2 py-1"
+                            min={0}
+                            max={4}
+                          />
+                          <span className="text-[#a090cb] text-sm">/hrs</span>
+                        </div>
+                      </div>
                     </div>
                   </InteractiveCard>
                 </div>
 
-                {/* Salary Breakdown Table */}
-                <InteractiveCard interactiveColor="#8055f6" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="overflow-hidden" disableRotation>
-                  <div className="p-6 border-b border-[#2d2249]">
-                    <h3 className="text-lg font-bold text-white">Salary Components Breakdown</h3>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead className="bg-[#1e1730] text-[#a090cb] text-xs uppercase font-semibold">
-                        <tr>
-                          <th className="px-6 py-4">Component Name</th>
-                          <th className="px-6 py-4">Percentage</th>
-                          <th className="px-6 py-4 text-right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#2d2249] text-sm text-white">
+                {/* Salary Components Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Salary Components Table */}
+                  <div className="lg:col-span-2">
+                    <InteractiveCard interactiveColor="#8055f6" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="overflow-hidden" disableRotation>
+                      <div className="p-5 border-b border-[#2d2249]">
+                        <h3 className="text-lg font-bold text-white">Salary Components</h3>
+                      </div>
+                      <div className="divide-y divide-[#2d2249]">
                         {salaryBreakdown.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-white/5 transition-colors">
-                            <td className="px-6 py-4 font-medium">{item.name}</td>
-                            <td className="px-6 py-4">{item.percentage}</td>
-                            <td className="px-6 py-4 text-right font-mono">₹{item.amount.toLocaleString()}</td>
-                          </tr>
+                          <div key={idx} className="p-4 hover:bg-white/5 transition-colors">
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="text-white font-medium">{item.name}</span>
+                              <div className="flex items-center gap-3 text-right">
+                                <span className="font-mono text-white">₹{item.amount.toLocaleString()}</span>
+                                <span className="text-[#a090cb] text-sm">₹ / month</span>
+                                <span className="text-[#6e3df5] font-semibold min-w-[60px] text-right">{item.percentage}</span>
+                              </div>
+                            </div>
+                            <p className="text-[#a090cb] text-xs">{item.description}</p>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
+                      </div>
+                    </InteractiveCard>
                   </div>
-                </InteractiveCard>
 
-                {/* Deductions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <InteractiveCard interactiveColor="#f97316" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <CreditCard className="w-5 h-5 text-orange-400" />
-                      <h3 className="text-white font-bold">PF Contribution</h3>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-[#2d2249]">
-                      <span className="text-[#a090cb] text-sm">Employee Share</span>
-                      <span className="text-white font-mono">₹{Math.round(employee.salary.deductions * 0.4).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-[#a090cb] text-sm">Employer Share</span>
-                      <span className="text-white font-mono">₹{Math.round(employee.salary.deductions * 0.4).toLocaleString()}</span>
-                    </div>
-                  </InteractiveCard>
-                  <InteractiveCard interactiveColor="#ef4444" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <Wallet className="w-5 h-5 text-red-400" />
-                      <h3 className="text-white font-bold">Tax Deductions</h3>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-[#2d2249]">
-                      <span className="text-[#a090cb] text-sm">Professional Tax</span>
-                      <span className="text-white font-mono">₹{Math.round(employee.salary.deductions * 0.05).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2">
-                      <span className="text-[#a090cb] text-sm">Income Tax (TDS)</span>
-                      <span className="text-white font-mono">₹{Math.round(employee.salary.deductions * 0.55).toLocaleString()}</span>
-                    </div>
-                  </InteractiveCard>
+                  {/* Right Column - PF and Tax */}
+                  <div className="space-y-4">
+                    {/* PF Contribution */}
+                    <InteractiveCard interactiveColor="#f97316" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-5">
+                      <h4 className="text-white font-bold mb-4 flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-orange-400" />
+                        Provident Fund (PF) Contribution
+                      </h4>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[#a090cb] text-sm">Employee</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-white">₹{calculatedSalary.employeePF.toLocaleString()}</span>
+                              <span className="text-[#a090cb] text-xs">₹ / month</span>
+                              <span className="text-[#6e3df5] text-sm">{SALARY_CONFIG.pfRate}%</span>
+                            </div>
+                          </div>
+                          <p className="text-[#a090cb] text-xs">PF is calculated based on the basic salary</p>
+                        </div>
+                        <div className="border-t border-[#2d2249] pt-3">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[#a090cb] text-sm">Employer</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-white">₹{calculatedSalary.employerPF.toLocaleString()}</span>
+                              <span className="text-[#a090cb] text-xs">₹ / month</span>
+                              <span className="text-[#6e3df5] text-sm">{SALARY_CONFIG.pfRate}%</span>
+                            </div>
+                          </div>
+                          <p className="text-[#a090cb] text-xs">PF is calculated based on the basic salary</p>
+                        </div>
+                      </div>
+                    </InteractiveCard>
+
+                    {/* Tax Deductions */}
+                    <InteractiveCard interactiveColor="#ef4444" tailwindBgClass="bg-[rgba(21,16,35,0.7)]" className="p-5">
+                      <h4 className="text-white font-bold mb-4 flex items-center gap-2">
+                        <Wallet className="w-4 h-4 text-red-400" />
+                        Tax Deductions
+                      </h4>
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[#a090cb] text-sm">Professional Tax</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-white">₹{calculatedSalary.professionalTax.toLocaleString()}</span>
+                            <span className="text-[#a090cb] text-xs">₹ / month</span>
+                          </div>
+                        </div>
+                        <p className="text-[#a090cb] text-xs">Professional Tax deducted from the Gross salary</p>
+                      </div>
+                    </InteractiveCard>
+                  </div>
                 </div>
               </div>
             )}

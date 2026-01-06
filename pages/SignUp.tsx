@@ -6,7 +6,7 @@ import { useStore } from '../store';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { Role, LeaveType, Employee } from '../types';
-import { Building2, User, Phone, Mail, Lock, Eye, EyeOff, ArrowRight, Infinity, Hash } from 'lucide-react';
+import { Building2, User, Phone, Mail, Lock, Eye, EyeOff, ArrowRight, Infinity, Hash, Upload, X, ImageIcon } from 'lucide-react';
 import RippleLoader from '../components/RippleLoader';
 import WaveBackground from '../components/WaveBackground';
 
@@ -51,6 +51,11 @@ export const SignUp = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   
+  // Company logo upload state
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('');
+  const [logoUploading, setLogoUploading] = useState(false);
+  
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<SignUpForm>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -82,6 +87,32 @@ export const SignUp = () => {
   
   const passwordStrength = getPasswordStrength(passwordValue);
 
+  // Handle company logo file selection
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file (PNG, JPG, SVG)');
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image size must be less than 5MB');
+        return;
+      }
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setLogoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview('');
+  };
+
   const onSubmit = async (data: SignUpForm) => {
     if (!agreedToTerms) {
       toast.error('Please agree to the Terms of Service');
@@ -99,13 +130,32 @@ export const SignUp = () => {
 
     // Generate new Employee object with defaults - using timestamp for unique ID
     let newId = `EMP${Date.now().toString().slice(-6)}`;
+    let companyLogoUrl = '';
     
     // Try Firebase registration first
     try {
       if (firebaseAuth) {
-        const result = await firebaseAuth.registerWithEmail(data.email, data.password);
+        const result = await firebaseAuth.registerWithEmail(data.email, data.password, `${data.firstName} ${data.lastName}`);
         if (result.user) {
           newId = result.user.uid; // Use Firebase UID as employee ID
+          
+          // Upload company logo if provided
+          if (logoFile) {
+            setLogoUploading(true);
+            try {
+              const logoResult = await firebaseAuth.uploadFile(
+                logoFile, 
+                `companies/${newId}/logo_${Date.now()}.${logoFile.name.split('.').pop()}`
+              );
+              if (logoResult.url) {
+                companyLogoUrl = logoResult.url;
+              }
+            } catch (uploadError) {
+              console.log('Logo upload failed, continuing without logo:', uploadError);
+            }
+            setLogoUploading(false);
+          }
+          
           toast.success('Firebase account created!');
         }
       }
@@ -134,6 +184,8 @@ export const SignUp = () => {
       gender: 'Not Specified',
       dob: '1990-01-01', // Default
       avatarUrl: `https://ui-avatars.com/api/?name=${data.firstName}+${data.lastName}&background=random`,
+      companyName: data.companyName,
+      companyLogo: companyLogoUrl,
       leaveBalance: {
         [LeaveType.PAID]: 15,
         [LeaveType.SICK]: 10,
@@ -216,7 +268,7 @@ export const SignUp = () => {
         
         {/* Sign Up Card */}
         <div 
-          className="relative z-10 w-full max-w-[420px] rounded-2xl p-6 sm:p-8 flex flex-col gap-5 my-8"
+          className="relative z-10 w-full max-w-[420px] rounded-2xl p-5 sm:p-6 flex flex-col gap-4 my-4 max-h-[90vh]"
           style={{
             background: 'rgba(30, 41, 59, 0.4)',
             backdropFilter: 'blur(12px)',
@@ -226,9 +278,9 @@ export const SignUp = () => {
           }}
         >
           {/* Header */}
-          <div className="space-y-1">
+          <div className="space-y-1 flex-shrink-0">
             <h2 
-              className="text-2xl sm:text-3xl font-bold tracking-tight italic"
+              className="text-2xl font-bold tracking-tight italic"
               style={{
                 background: 'linear-gradient(to right, #8359f8, #c084fc, #22d3ee)',
                 WebkitBackgroundClip: 'text',
@@ -242,11 +294,11 @@ export const SignUp = () => {
           </div>
           
           {/* Role Toggle */}
-          <div className="flex bg-[#1E293B]/60 rounded-lg p-1">
+          <div className="flex bg-[#1E293B]/60 rounded-lg p-1 flex-shrink-0">
             <button
               type="button"
               onClick={() => setValue('role', Role.EMPLOYEE)}
-              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
                 selectedRole === Role.EMPLOYEE 
                   ? 'bg-[#8359f8] text-white shadow-lg' 
                   : 'text-slate-400 hover:text-white'
@@ -257,7 +309,7 @@ export const SignUp = () => {
             <button
               type="button"
               onClick={() => setValue('role', Role.ADMIN)}
-              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
                 selectedRole === Role.ADMIN 
                   ? 'bg-[#8359f8] text-white shadow-lg' 
                   : 'text-slate-400 hover:text-white'
@@ -267,28 +319,67 @@ export const SignUp = () => {
             </button>
           </div>
           
+          {/* Scrollable Form Container */}
+          <div className="flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar">
           {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Company Name */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Company Name</label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Acme Inc."
-                  className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-3 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
-                  {...register('companyName')}
-                />
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+            {/* Company Name & Logo Row */}
+            <div className="grid grid-cols-3 gap-3">
+              {/* Company Name - Takes 2/3 */}
+              <div className="col-span-2 space-y-1">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Company Name</label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Acme Inc."
+                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    {...register('companyName')}
+                  />
+                </div>
+                {errors.companyName && <p className="text-xs text-red-400">{errors.companyName.message}</p>}
               </div>
-              {errors.companyName && <p className="text-xs text-red-400">{errors.companyName.message}</p>}
+              
+              {/* Company Logo - Takes 1/3 */}
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Logo</label>
+                {logoPreview ? (
+                  <div className="relative h-[42px] w-full">
+                    <img 
+                      src={logoPreview} 
+                      alt="Logo" 
+                      className="h-[42px] w-full rounded-lg object-contain border border-slate-600 bg-slate-800/50" 
+                    />
+                    <button 
+                      type="button"
+                      onClick={removeLogo}
+                      className="absolute -top-1 -right-1 p-0.5 bg-red-500 rounded-full text-white hover:bg-red-400 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center h-[42px] w-full border border-dashed border-slate-600 rounded-lg cursor-pointer hover:border-cyan-500/50 hover:bg-slate-800/30 transition-all group">
+                    <div className="flex items-center gap-1.5">
+                      <Upload className="w-4 h-4 text-slate-500 group-hover:text-cyan-400" />
+                      <span className="text-xs text-slate-500 group-hover:text-cyan-400">Upload</span>
+                    </div>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                      onChange={handleLogoChange}
+                    />
+                  </label>
+                )}
+              </div>
             </div>
             
             {/* Login ID (Auto-generated) */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className="text-xs font-medium text-slate-400 uppercase tracking-wide flex items-center gap-2">
-                Login ID <span className="text-slate-500 normal-case font-normal">(Auto-generated)</span>
-                <div className="ml-auto w-2 h-2 rounded-full bg-cyan-400" />
+                Login ID <span className="text-slate-500 normal-case font-normal">(Auto)</span>
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400" />
               </label>
               <div className="relative">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -296,7 +387,7 @@ export const SignUp = () => {
                   type="text"
                   value={generatedLoginId}
                   disabled
-                  className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/50 px-4 pl-10 pr-10 py-3 text-sm text-slate-400 cursor-not-allowed"
+                  className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/50 px-4 pl-10 pr-10 py-2.5 text-sm text-slate-400 cursor-not-allowed"
                 />
                 <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
               </div>
@@ -304,27 +395,27 @@ export const SignUp = () => {
             
             {/* Full Name & Phone Row */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Full Name</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type="text"
                     placeholder="John Doe"
-                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-3 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
                     {...register('firstName')}
                   />
                 </div>
                 {errors.firstName && <p className="text-xs text-red-400">{errors.firstName.message}</p>}
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Phone</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type="tel"
-                    placeholder="+1 (555) 000-0000"
-                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-3 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    placeholder="+91 9876543210"
+                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
                     {...register('phone')}
                   />
                 </div>
@@ -335,76 +426,77 @@ export const SignUp = () => {
             <input type="hidden" value="User" {...register('lastName')} />
             
             {/* Work Email */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Work Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="email"
                   placeholder="john@company.com"
-                  className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-3 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                  className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
                   {...register('email')}
                 />
               </div>
               {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
             </div>
             
-            {/* Password */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 pr-10 py-3 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
-                  {...register('password')}
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {/* Password Strength Bar */}
-              {passwordValue && (
-                <div className="space-y-1">
-                  <div className="flex gap-1 h-1">
-                    <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 1 ? 'bg-red-500' : 'bg-slate-700'}`} />
-                    <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 2 ? 'bg-orange-500' : 'bg-slate-700'}`} />
-                    <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 3 ? 'bg-yellow-500' : 'bg-slate-700'}`} />
-                    <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 4 ? 'bg-green-500' : 'bg-slate-700'}`} />
-                    <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 5 ? 'bg-emerald-400' : 'bg-slate-700'}`} />
-                  </div>
-                  <p className={`text-xs ${passwordStrength.color}`}>Password strength: {passwordStrength.label}</p>
+            {/* Password Row - Side by Side */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 pr-9 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    {...register('password')}
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
-              )}
-              {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
+                {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Confirm</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 pr-9 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    {...register('confirmPassword')}
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.confirmPassword && <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>}
+              </div>
             </div>
             
-            {/* Confirm Password */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Confirm Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 pr-10 py-3 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
-                  {...register('confirmPassword')}
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+            {/* Password Strength Bar */}
+            {passwordValue && (
+              <div className="space-y-1">
+                <div className="flex gap-1 h-1">
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 1 ? 'bg-red-500' : 'bg-slate-700'}`} />
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 2 ? 'bg-orange-500' : 'bg-slate-700'}`} />
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 3 ? 'bg-yellow-500' : 'bg-slate-700'}`} />
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 4 ? 'bg-green-500' : 'bg-slate-700'}`} />
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 5 ? 'bg-emerald-400' : 'bg-slate-700'}`} />
+                </div>
+                <p className={`text-xs ${passwordStrength.color}`}>{passwordStrength.label}</p>
               </div>
-              {errors.confirmPassword && <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>}
-            </div>
+            )}
             
             {/* Terms Checkbox */}
             <label className="flex items-start gap-3 cursor-pointer group">
@@ -430,17 +522,19 @@ export const SignUp = () => {
             {/* Sign Up Button */}
             <button 
               type="submit"
-              disabled={loading}
-              className="w-full py-3.5 px-4 rounded-lg text-white font-semibold text-sm shadow-lg tracking-wide flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(131,89,248,0.4)] hover:brightness-110 hover:scale-[1.01]"
+              disabled={loading || logoUploading}
+              className="w-full py-3 px-4 rounded-lg text-white font-semibold text-sm shadow-lg tracking-wide flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(131,89,248,0.4)] hover:brightness-110 hover:scale-[1.01]"
               style={{ background: 'linear-gradient(90deg, #8359f8 0%, #d946ef 100%)' }}
             >
-              <span>{loading ? 'Creating Account...' : 'Sign Up'}</span>
-              {!loading && <ArrowRight className="w-4 h-4" />}
+              <span>{loading || logoUploading ? (logoUploading ? 'Uploading Logo...' : 'Creating Account...') : 'Sign Up'}</span>
+              {!loading && !logoUploading && <ArrowRight className="w-4 h-4" />}
             </button>
           </form>
+          </div>
+          {/* End Scrollable Form Container */}
           
-          {/* Footer */}
-          <div className="text-center">
+          {/* Footer - Fixed at bottom */}
+          <div className="text-center flex-shrink-0 pt-2">
             <p className="text-sm text-slate-400">
               Already have an account?{' '}
               <Link 

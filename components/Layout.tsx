@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 import WaveBackground from './WaveBackground';
@@ -18,19 +18,65 @@ import {
   ChevronDown,
   Settings,
   Infinity,
-  MessageCircle
+  MessageCircle,
+  LogIn,
+  LogOutIcon
 } from 'lucide-react';
 import { Role } from '../types';
 import { cn } from './UI';
+import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
 
 export const Layout = () => {
-  const { currentUser, logout } = useStore();
+  const { currentUser, logout, checkIn, checkOut, attendance } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Check in state
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const todayAttendance = useMemo(() => {
+    if (!currentUser) return null;
+    return attendance.find(a => a.employeeId === currentUser.id && a.date === todayStr);
+  }, [attendance, currentUser, todayStr]);
+
+  const isCheckedIn = !!todayAttendance?.checkIn && !todayAttendance?.checkOut;
+  const checkInTime = todayAttendance?.checkIn ? new Date(todayAttendance.checkIn) : null;
+
+  // Update time every minute
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Calculate time since check in
+  const timeSinceCheckIn = useMemo(() => {
+    if (!checkInTime) return '';
+    const diff = currentTime.getTime() - checkInTime.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  }, [checkInTime, currentTime]);
+
+  // Handle check in/out
+  const handleCheckIn = () => {
+    if (currentUser) {
+      checkIn(currentUser.id);
+      toast.success('Checked in successfully!');
+    }
+  };
+
+  const handleCheckOut = () => {
+    if (currentUser) {
+      checkOut(currentUser.id);
+      toast.success('Checked out successfully!');
+    }
+  };
 
   // Hidden demo reset shortcut: Ctrl+Shift+R
   useEffect(() => {
@@ -130,17 +176,26 @@ export const Layout = () => {
             to="/" 
             className="flex items-center gap-2.5 shrink-0 group"
           >
-            <div 
-              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105"
-              style={{ 
-                background: `linear-gradient(135deg, ${themeColors.gradientFrom}, ${themeColors.gradientTo})`,
-                boxShadow: `0 10px 15px -3px ${themeColors.primary}40`
-              }}
-            >
-              <Infinity className="w-5 h-5 text-white" />
-            </div>
+            {/* Company Logo or Default */}
+            {currentUser.companyLogo ? (
+              <img 
+                src={currentUser.companyLogo} 
+                alt={currentUser.companyName || 'Company Logo'}
+                className="w-9 h-9 rounded-xl object-contain bg-slate-800/50 shadow-lg transition-all duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div 
+                className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105"
+                style={{ 
+                  background: `linear-gradient(135deg, ${themeColors.gradientFrom}, ${themeColors.gradientTo})`,
+                  boxShadow: `0 10px 15px -3px ${themeColors.primary}40`
+                }}
+              >
+                <Infinity className="w-5 h-5 text-white" />
+              </div>
+            )}
             <span className="text-xl font-bold text-white hidden sm:block">
-              Dayflow
+              {currentUser.companyName || 'Dayflow'}
             </span>
           </NavLink>
 
@@ -208,6 +263,45 @@ export const Layout = () => {
             )}>
               <Search className="w-5 h-5" />
             </button>
+
+            {/* Check In/Check Out Button */}
+            {!isAdmin && (
+              <div className="flex items-center gap-2">
+                {/* Status Dot */}
+                <span className={cn(
+                  "w-3 h-3 rounded-full transition-all",
+                  isCheckedIn 
+                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" 
+                    : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+                )}></span>
+                
+                {isCheckedIn ? (
+                  <div className="flex flex-col items-end">
+                    <span className={cn(
+                      "text-[10px] leading-tight",
+                      isAdmin ? "text-slate-400" : "text-[#a090cb]"
+                    )}>
+                      Since {checkInTime ? format(checkInTime, 'hh:mm a') : ''}
+                    </span>
+                    <button
+                      onClick={handleCheckOut}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-semibold transition-all border border-red-500/30"
+                    >
+                      Check Out
+                      <LogOutIcon className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleCheckIn}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all border border-emerald-500/30"
+                  >
+                    Check IN
+                    <LogIn className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Notification Bell */}
             <button className={cn(
@@ -351,13 +445,22 @@ export const Layout = () => {
               isAdmin ? "border-slate-700" : "border-[#2d2249]"
             )}>
               <div className="flex items-center gap-2.5">
-                <div 
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: `linear-gradient(135deg, ${themeColors.gradientFrom}, ${themeColors.gradientTo})` }}
-                >
-                  <Infinity className="w-4 h-4 text-white" />
-                </div>
-                <span className="text-lg font-bold text-white">Dayflow</span>
+                {/* Company Logo or Default */}
+                {currentUser.companyLogo ? (
+                  <img 
+                    src={currentUser.companyLogo} 
+                    alt={currentUser.companyName || 'Company Logo'}
+                    className="w-8 h-8 rounded-lg object-contain bg-slate-800/50"
+                  />
+                ) : (
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: `linear-gradient(135deg, ${themeColors.gradientFrom}, ${themeColors.gradientTo})` }}
+                  >
+                    <Infinity className="w-4 h-4 text-white" />
+                  </div>
+                )}
+                <span className="text-lg font-bold text-white">{currentUser.companyName || 'Dayflow'}</span>
               </div>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}

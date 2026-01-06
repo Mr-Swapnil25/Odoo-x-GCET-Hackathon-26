@@ -298,16 +298,21 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
   
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className={cn(
-        "w-full rounded-2xl border shadow-2xl animate-in fade-in zoom-in-95 duration-200",
+        "w-full rounded-2xl border shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col",
         sizes[size],
         theme.isAdmin
           ? 'bg-slate-800 border-slate-700 shadow-blue-900/20'
           : 'bg-[#1e1835] border-[#2d2249] shadow-[#6e3df5]/10'
       )}>
         <div className={cn(
-          "flex items-center justify-between border-b p-5",
+          "flex items-center justify-between border-b p-5 flex-shrink-0",
           theme.isAdmin ? "border-slate-700" : "border-[#2d2249]"
         )}>
           <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -323,7 +328,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             ✕
           </button>
         </div>
-        <div className="p-5">{children}</div>
+        <div className="p-5 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );

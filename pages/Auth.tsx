@@ -57,7 +57,9 @@ export const Login = () => {
               id: user.id,
               email: user.email,
               name: `${user.firstName} ${user.lastName}`,
-              role: user.role
+              role: user.role,
+              companyName: user.companyName,
+              companyLogo: user.companyLogo
             });
           } else {
             // Create user session from Firebase auth
@@ -85,7 +87,9 @@ export const Login = () => {
         id: user.id,
         email: user.email,
         name: `${user.firstName} ${user.lastName}`,
-        role: user.role
+        role: user.role,
+        companyName: user.companyName,
+        companyLogo: user.companyLogo
       });
       toast.success('Welcome back!');
       navigate('/');

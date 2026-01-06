@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../lib/ThemeContext';
 import { useStore } from '../store';
+import { useLocation } from 'react-router-dom';
 import {
   Chat as ChatType,
   Message,
@@ -279,9 +280,10 @@ interface NewChatModalProps {
   onClose: () => void;
   onSelectUser: (userId: string, userName: string, userAvatar: string) => void;
   currentUserId: string;
+  localEmployees: any[];
 }
 
-const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onSelectUser, currentUserId }) => {
+const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onSelectUser, currentUserId, localEmployees }) => {
   const { isAdmin } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<any[]>([]);
@@ -291,7 +293,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onSelectUs
     const searchUsers = async () => {
       if (searchQuery.length >= 2) {
         setLoading(true);
-        const results = await searchUsersForChat(searchQuery, currentUserId);
+        const results = await searchUsersForChat(searchQuery, currentUserId, 10, localEmployees);
         setUsers(results);
         setLoading(false);
       } else {
@@ -301,7 +303,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onSelectUs
     
     const debounce = setTimeout(searchUsers, 300);
     return () => clearTimeout(debounce);
-  }, [searchQuery, currentUserId]);
+  }, [searchQuery, currentUserId, localEmployees]);
   
   if (!isOpen) return null;
   
@@ -380,7 +382,8 @@ const NewChatModal: React.FC<NewChatModalProps> = ({ isOpen, onClose, onSelectUs
 // Main Chat Page Component
 const Chat: React.FC = () => {
   const { isAdmin, theme } = useTheme();
-  const { currentUser } = useStore();
+  const { currentUser, employees } = useStore();
+  const location = useLocation();
   const [chats, setChats] = useState<ChatType[]>([]);
   const [selectedChat, setSelectedChat] = useState<ChatType | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -404,6 +407,21 @@ const Chat: React.FC = () => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+  
+  // Handle navigation from Employees page with selected employee
+  useEffect(() => {
+    const state = location.state as { selectedEmployee?: any } | null;
+    if (state?.selectedEmployee && currentUser) {
+      const emp = state.selectedEmployee;
+      handleSelectUserForChat(
+        emp.id,
+        `${emp.firstName} ${emp.lastName}`,
+        emp.avatarUrl || `https://ui-avatars.com/api/?name=${emp.firstName}+${emp.lastName}&background=random`
+      );
+      // Clear location state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, currentUser]);
   
   // Subscribe to chats
   useEffect(() => {
@@ -483,9 +501,11 @@ const Chat: React.FC = () => {
         },
         lastMessage: '',
         lastMessageTime: null,
+        lastMessageSenderId: '',
         unreadCount: {},
-        createdAt: null,
-        updatedAt: null
+        type: 'direct',
+        createdAt: null as any,
+        updatedAt: null as any
       });
     }
     
@@ -778,6 +798,7 @@ const Chat: React.FC = () => {
         onClose={() => setShowNewChatModal(false)}
         onSelectUser={handleSelectUserForChat}
         currentUserId={currentUserId}
+        localEmployees={employees}
       />
     </div>
   );

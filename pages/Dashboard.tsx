@@ -244,6 +244,21 @@ export const Dashboard = () => {
           </div>
         </InteractiveCard>
 
+        {/* Real-time Notifications for Admin */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <AnimatedNotification 
+            maxNotifications={4}
+            autoInterval={5000}
+            autoGenerate={true}
+            animationDuration={500}
+            variant="glass"
+            showAvatars={true}
+            showTimestamps={true}
+            allowDismiss={true}
+            position="bottom-right"
+          />
+        </div>
+
         {/* Recent Leaves List */}
         <TableCard>
           <div className="p-6">
@@ -671,20 +686,6 @@ export const Dashboard = () => {
         </section>
       </div>
 
-      {/* Floating Live Notifications */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <AnimatedNotification 
-          maxNotifications={3}
-          autoInterval={4000}
-          autoGenerate={true}
-          animationDuration={500}
-          variant="glass"
-          showAvatars={true}
-          showTimestamps={true}
-          allowDismiss={true}
-          position="bottom-right"
-        />
-      </div>
     </div>
   );
 };

@@ -5,19 +5,22 @@ import { Input, Button, Modal, Select, Badge, Avatar, cn, useRoleTheme } from '.
 import { 
   Search, Edit2, Save, X, Briefcase, DollarSign, Users, UserCheck, 
   Clock, CreditCard, TrendingUp, MoreVertical, ChevronLeft, ChevronRight,
-  Plus, ArrowRight, Filter, Sparkles, Loader2, Bot, RefreshCw, Plane
+  Plus, ArrowRight, Filter, Sparkles, Loader2, Bot, RefreshCw, Plane,
+  Mail, Phone, MapPin, Calendar, User, Copy, Check, MessageCircle
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { DEPARTMENTS } from '../data';
 import { Role, Employee, LeaveStatus, LeaveType } from '../types';
 import { toast } from 'react-hot-toast';
 import { format, parseISO, isWithinInterval } from 'date-fns';
 import { generatePerformanceSummary } from '../lib/gemini';
 
-type EmployeeStatus = 'all' | 'active' | 'on-leave' | 'remote' | 'offline';
+type EmployeeStatus = 'all' | 'present' | 'on-leave' | 'absent';
 
 export const Employees = () => {
-  const { employees, currentUser, updateEmployee, leaves, attendance } = useStore();
+  const { employees, currentUser, updateEmployee, leaves, attendance, addEmployee } = useStore();
   const theme = useRoleTheme();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState<EmployeeStatus>('all');
@@ -30,6 +33,26 @@ export const Employees = () => {
   const [editForm, setEditForm] = useState<Employee | null>(null);
   const [aiSummary, setAiSummary] = useState<string>('');
   const [isLoadingAI, setIsLoadingAI] = useState(false);
+  
+  // Add Employee Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newEmpForm, setNewEmpForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    department: 'Engineering',
+    designation: '',
+    dob: '1990-01-01',
+    gender: 'Male',
+    address: '',
+    basicSalary: 30000,
+    hra: 10000,
+    allowances: 5000,
+    deductions: 2000
+  });
+  const [generatedCredentials, setGeneratedCredentials] = useState<{ loginId: string; password: string } | null>(null);
+  const [isCreatingEmployee, setIsCreatingEmployee] = useState(false);
 
   if (currentUser?.role !== Role.ADMIN) return <div className="text-white">Access Denied</div>;
 
@@ -44,8 +67,9 @@ export const Employees = () => {
     return leaves.filter(l => l.status === LeaveStatus.PENDING).length;
   }, [leaves]);
 
-  // Get employee status
-  const getEmployeeStatus = (empId: string): { status: string; color: string; bgColor: string; borderColor: string } => {
+  // Get employee status - Updated to match wireframe:
+  // Green dot = present (in office), Airplane = on leave, Yellow/Amber dot = absent
+  const getEmployeeStatus = (empId: string): { status: string; color: string; bgColor: string; borderColor: string; isOnLeave: boolean } => {
     // Check if on leave today
     const onLeave = leaves.some(l => {
       if (l.employeeId !== empId || l.status !== LeaveStatus.APPROVED) return false;
@@ -58,25 +82,22 @@ export const Employees = () => {
         return false;
       }
     });
-    if (onLeave) return { status: 'On Leave', color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20' };
+    if (onLeave) return { status: 'On Leave', color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20', isOnLeave: true };
 
-    // Check if checked in today (active)
+    // Check if checked in today (present in office - green dot)
     const checkedIn = attendance.some(a => a.employeeId === empId && a.date === todayStr && a.checkIn);
-    if (checkedIn) return { status: 'Active', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20' };
+    if (checkedIn) return { status: 'Present', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10', borderColor: 'border-emerald-500/20', isOnLeave: false };
 
-    // Simulate remote/offline based on employee index
-    const empIndex = employees.findIndex(e => e.id === empId);
-    if (empIndex % 7 === 3) return { status: 'Remote', color: 'text-purple-400', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/20' };
-    
-    return { status: 'Offline', color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20' };
+    // Employee has not applied time off and is absent (yellow dot)
+    return { status: 'Absent', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/20', isOnLeave: false };
   };
 
   const getStatusDotColor = (status: string) => {
     switch (status) {
-      case 'Active': return 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]';
+      case 'Present': return 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]';
       case 'On Leave': return 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]';
-      case 'Remote': return 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]';
-      default: return 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]';
+      case 'Absent': return 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]';
+      default: return 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]';
     }
   };
 
@@ -125,6 +146,115 @@ export const Employees = () => {
       setIsEditing(false);
       toast.success('Employee details updated successfully');
     }
+  };
+
+  // Generate random password
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$!';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  // Generate Login ID
+  const generateLoginId = (firstName: string, companyCode: string = 'DFL') => {
+    const year = new Date().getFullYear();
+    const random = Math.floor(1000 + Math.random() * 9000);
+    return `${companyCode}${year}${random}`;
+  };
+
+  // Handle Add Employee
+  const handleAddEmployee = async () => {
+    if (!newEmpForm.firstName || !newEmpForm.lastName || !newEmpForm.email) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Check if email already exists
+    if (employees.some(e => e.email === newEmpForm.email)) {
+      toast.error('An employee with this email already exists');
+      return;
+    }
+
+    setIsCreatingEmployee(true);
+
+    try {
+      const loginId = generateLoginId(newEmpForm.firstName);
+      const tempPassword = generatePassword();
+      const newId = `EMP${Date.now().toString().slice(-6)}`;
+      
+      const netSalary = newEmpForm.basicSalary + newEmpForm.hra + newEmpForm.allowances - newEmpForm.deductions;
+
+      const newEmployee: Employee = {
+        id: newId,
+        email: newEmpForm.email,
+        password: tempPassword,
+        role: Role.EMPLOYEE,
+        firstName: newEmpForm.firstName,
+        lastName: newEmpForm.lastName,
+        phone: newEmpForm.phone,
+        address: newEmpForm.address,
+        department: newEmpForm.department,
+        designation: newEmpForm.designation,
+        joinDate: new Date().toISOString().split('T')[0],
+        gender: newEmpForm.gender,
+        dob: newEmpForm.dob,
+        avatarUrl: `https://ui-avatars.com/api/?name=${newEmpForm.firstName}+${newEmpForm.lastName}&background=random`,
+        leaveBalance: {
+          [LeaveType.PAID]: 15,
+          [LeaveType.SICK]: 10,
+          [LeaveType.CASUAL]: 7,
+          [LeaveType.UNPAID]: 0
+        },
+        salary: {
+          basic: newEmpForm.basicSalary,
+          hra: newEmpForm.hra,
+          allowances: newEmpForm.allowances,
+          deductions: newEmpForm.deductions,
+          netSalary
+        },
+        documents: []
+      };
+
+      addEmployee(newEmployee);
+      setGeneratedCredentials({ loginId, password: tempPassword });
+      toast.success('Employee created successfully!');
+    } catch (error) {
+      toast.error('Failed to create employee');
+      console.error(error);
+    } finally {
+      setIsCreatingEmployee(false);
+    }
+  };
+
+  const resetAddForm = () => {
+    setNewEmpForm({
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      department: 'Engineering',
+      designation: '',
+      dob: '1990-01-01',
+      gender: 'Male',
+      address: '',
+      basicSalary: 30000,
+      hra: 10000,
+      allowances: 5000,
+      deductions: 2000
+    });
+    setGeneratedCredentials(null);
+    setShowAddModal(false);
+  };
+
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+    toast.success(`${field} copied to clipboard!`);
   };
 
   const presentPercentage = employees.length > 0 ? Math.round((presentToday / employees.length) * 100) : 0;
@@ -231,18 +361,30 @@ export const Employees = () => {
         {/* Controls Bar */}
         <div className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-xl p-4 mb-6 sticky top-20 z-30">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            {/* Search */}
-            <div className="relative w-full md:max-w-md group">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+            {/* Left Section - NEW Button and Search */}
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              {/* NEW Button */}
+              <button 
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold px-4 py-2.5 rounded-lg shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" />
+                NEW
+              </button>
+              
+              {/* Search */}
+              <div className="relative flex-1 md:w-80 group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                </div>
+                <input 
+                  type="text"
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="block w-full rounded-lg border border-slate-600 bg-slate-900 py-2.5 pl-10 pr-3 text-white placeholder-slate-500 focus:border-blue-500/70 focus:ring-1 focus:ring-blue-500/70 focus:shadow-[0_0_10px_rgba(59,130,246,0.3),0_0_20px_rgba(59,130,246,0.1)] transition-all outline-none"
+                  placeholder="Search..."
+                />
               </div>
-              <input 
-                type="text"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="block w-full rounded-lg border border-slate-600 bg-slate-900 py-2.5 pl-10 pr-3 text-white placeholder-slate-500 focus:border-blue-500/70 focus:ring-1 focus:ring-blue-500/70 focus:shadow-[0_0_10px_rgba(59,130,246,0.3),0_0_20px_rgba(59,130,246,0.1)] transition-all outline-none"
-                placeholder="Search employees by name, ID, or role..."
-              />
             </div>
             
             {/* Filters */}
@@ -270,10 +412,9 @@ export const Employees = () => {
                   className="appearance-none bg-slate-900 border border-slate-600 text-white text-sm rounded-lg focus:ring-blue-500/50 focus:border-blue-500/50 block w-full p-2.5 pr-8 cursor-pointer hover:border-slate-500 transition-colors outline-none"
                 >
                   <option value="all">Status: All</option>
-                  <option value="active">Active</option>
+                  <option value="present">Present</option>
                   <option value="on-leave">On Leave</option>
-                  <option value="remote">Remote</option>
-                  <option value="offline">Offline</option>
+                  <option value="absent">Absent</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
                   <ChevronLeft className="w-4 h-4 rotate-[-90deg]" />
@@ -308,6 +449,17 @@ export const Employees = () => {
                 {/* Top Gradient Line on Hover */}
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 
+                {/* Status Indicator at Top Right */}
+                <div className="absolute top-3 right-3">
+                  {empStatus.isOnLeave ? (
+                    <div className="h-6 w-6 rounded-full bg-amber-500/20 flex items-center justify-center">
+                      <Plane className="w-3.5 h-3.5 text-amber-400" />
+                    </div>
+                  ) : (
+                    <span className={`h-3 w-3 rounded-full ${getStatusDotColor(empStatus.status)}`}></span>
+                  )}
+                </div>
+                
                 <div className="flex justify-between items-start">
                   <div className="flex gap-4">
                     <div className="relative">
@@ -324,13 +476,6 @@ export const Employees = () => {
                           </div>
                         )}
                       </div>
-                      <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-slate-900 flex items-center justify-center">
-                        {empStatus.status === 'On Leave' ? (
-                          <Plane className="w-2.5 h-2.5 text-amber-400" />
-                        ) : (
-                          <span className={`h-2.5 w-2.5 rounded-full ${getStatusDotColor(empStatus.status)}`}></span>
-                        )}
-                      </span>
                     </div>
                     <div>
                       <h3 className="font-bold text-lg text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-blue-400 transition-all duration-300">
@@ -339,12 +484,6 @@ export const Employees = () => {
                       <p className="text-sm text-slate-400">{emp.designation}</p>
                     </div>
                   </div>
-                  <button 
-                    className="text-slate-400 hover:text-white p-1 rounded-md hover:bg-white/5 transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-sm mt-2">
@@ -360,7 +499,7 @@ export const Employees = () => {
 
                 <div className="flex items-center justify-between pt-2 mt-auto">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${empStatus.bgColor} ${empStatus.color} border ${empStatus.borderColor}`}>
-                    {empStatus.status === 'On Leave' ? (
+                    {empStatus.isOnLeave ? (
                       <Plane className="w-3 h-3" />
                     ) : (
                       <span className={`w-1.5 h-1.5 rounded-full ${empStatus.color.replace('text-', 'bg-')}`}></span>
@@ -375,7 +514,7 @@ export const Employees = () => {
                       setIsEditing(false);
                     }}
                   >
-                    VIEW PROFILE
+                    VIEW
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -459,7 +598,10 @@ export const Employees = () => {
       </main>
 
       {/* Floating Action Button */}
-      <button className="fixed bottom-8 right-8 z-40 group">
+      <button 
+        className="fixed bottom-8 right-8 z-40 group"
+        onClick={() => setShowAddModal(true)}
+      >
         <div className="absolute inset-0 rounded-full bg-[#8055f6]/30 blur-xl opacity-50 group-hover:opacity-100 transition-opacity animate-pulse"></div>
         <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[#8055f6] to-[#06b6d4] text-white shadow-xl shadow-[#8055f6]/30 transition-transform group-hover:scale-110 hover:shadow-[0_0_15px_rgba(128,85,246,0.5),0_0_30px_rgba(128,85,246,0.2)]">
           <Plus className="w-7 h-7" />
@@ -469,32 +611,57 @@ export const Employees = () => {
       {/* Employee Detail Modal */}
       <Modal 
         isOpen={!!selectedEmp} 
-        onClose={() => setSelectedEmp(null)} 
+        onClose={() => { setSelectedEmp(null); setIsEditing(false); setAiSummary(''); }} 
         title={isEditing ? "Edit Employee Details" : "Employee Details"}
+        size="lg"
       >
         {selectedEmp && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gray-800">
-                {selectedEmp.avatarUrl ? (
-                  <img 
-                    src={selectedEmp.avatarUrl} 
-                    alt={`${selectedEmp.firstName} ${selectedEmp.lastName}`}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="h-full w-full bg-gradient-to-br from-[#8055f6] to-[#06b6d4] flex items-center justify-center text-white font-bold text-xl">
-                    {selectedEmp.firstName.charAt(0)}{selectedEmp.lastName.charAt(0)}
-                  </div>
-                )}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">{selectedEmp.firstName} {selectedEmp.lastName}</h2>
-                <p className="text-[#a49cba]">{selectedEmp.email}</p>
-                <div className="flex gap-2 mt-1">
-                  <Badge variant="outline" className="border-[#8055f6]/50 text-[#a49cba]">{selectedEmp.role}</Badge>
-                  <Badge className="bg-[#8055f6]/20 text-[#8055f6]">{selectedEmp.id}</Badge>
+          <div className="space-y-5 max-h-[70vh] overflow-y-auto pr-2">
+            {/* Header with Employee Info and Actions */}
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#2c2839]">
+              <div className="flex items-center gap-4">
+                <div className="h-16 w-16 rounded-xl overflow-hidden bg-gray-800 flex-shrink-0">
+                  {selectedEmp.avatarUrl ? (
+                    <img 
+                      src={selectedEmp.avatarUrl} 
+                      alt={`${selectedEmp.firstName} ${selectedEmp.lastName}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-[#8055f6] to-[#06b6d4] flex items-center justify-center text-white font-bold text-xl">
+                      {selectedEmp.firstName.charAt(0)}{selectedEmp.lastName.charAt(0)}
+                    </div>
+                  )}
                 </div>
+                <div>
+                  <h2 className="text-xl font-bold text-white">{selectedEmp.firstName} {selectedEmp.lastName}</h2>
+                  <p className="text-[#a49cba] text-sm">{selectedEmp.email}</p>
+                  <div className="flex gap-2 mt-2">
+                    <Badge variant="outline" className="border-[#8055f6]/50 text-[#a49cba]">{selectedEmp.role}</Badge>
+                    <Badge className="bg-[#8055f6]/20 text-[#8055f6]">{selectedEmp.id}</Badge>
+                  </div>
+                </div>
+              </div>
+              {/* Quick Actions */}
+              <div className="flex gap-2 flex-shrink-0">
+                <button
+                  onClick={() => {
+                    setSelectedEmp(null);
+                    navigate('/chat', { state: { selectedEmployee: selectedEmp } });
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
+                  title="Message Employee"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Message
+                </button>
+                <button
+                  onClick={() => { setSelectedEmp(null); setIsEditing(false); setAiSummary(''); }}
+                  className="p-2 rounded-lg bg-[#2c2839] hover:bg-[#3d3559] text-slate-400 hover:text-white transition-colors"
+                  title="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </div>
              
@@ -690,11 +857,294 @@ export const Employees = () => {
                   </div>
                 </div>
 
-                <Button className="w-full bg-[#8055f6] hover:bg-[#6d44d6]" onClick={handleEditClick}>
-                  <Edit2 className="w-4 h-4 mr-2" /> Edit Employee Details
-                </Button>
+                <div className="flex gap-3 pt-4 border-t border-[#2c2839]">
+                  <Button className="flex-1 bg-[#8055f6] hover:bg-[#6d44d6]" onClick={handleEditClick}>
+                    <Edit2 className="w-4 h-4 mr-2" /> Edit Details
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => {
+                      setSelectedEmp(null);
+                      navigate('/chat', { state: { selectedEmployee: selectedEmp } });
+                    }}
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" /> Message
+                  </Button>
+                </div>
               </>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Add Employee Modal */}
+      <Modal 
+        isOpen={showAddModal} 
+        onClose={resetAddForm} 
+        title={generatedCredentials ? "Employee Created Successfully!" : "Add New Employee"}
+      >
+        {generatedCredentials ? (
+          // Show generated credentials
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-emerald-900/30 to-emerald-900/10 p-6 rounded-xl border border-emerald-500/30 text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Employee Added!</h3>
+              <p className="text-slate-400 text-sm">Share these credentials with the new employee</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-[#1e1b27] p-4 rounded-lg border border-[#2c2839]">
+                <label className="text-xs font-semibold text-slate-400 uppercase mb-2 block">Login ID</label>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-lg text-white">{generatedCredentials.loginId}</span>
+                  <button
+                    onClick={() => copyToClipboard(generatedCredentials.loginId, 'Login ID')}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    {copiedField === 'Login ID' ? (
+                      <Check className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-[#1e1b27] p-4 rounded-lg border border-[#2c2839]">
+                <label className="text-xs font-semibold text-slate-400 uppercase mb-2 block">Email</label>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-lg text-white">{newEmpForm.email}</span>
+                  <button
+                    onClick={() => copyToClipboard(newEmpForm.email, 'Email')}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    {copiedField === 'Email' ? (
+                      <Check className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-[#1e1b27] p-4 rounded-lg border border-[#2c2839]">
+                <label className="text-xs font-semibold text-slate-400 uppercase mb-2 block">Temporary Password</label>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-lg text-white">{generatedCredentials.password}</span>
+                  <button
+                    onClick={() => copyToClipboard(generatedCredentials.password, 'Password')}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    {copiedField === 'Password' ? (
+                      <Check className="w-4 h-4 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-3">
+              <p className="text-amber-300 text-xs flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Employee will be prompted to change password on first login
+              </p>
+            </div>
+
+            <Button className="w-full bg-[#8055f6] hover:bg-[#6d44d6]" onClick={resetAddForm}>
+              Done
+            </Button>
+          </div>
+        ) : (
+          // Add Employee Form
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#a49cba] uppercase flex items-center gap-1">
+                  <User className="w-3 h-3" /> First Name *
+                </label>
+                <Input 
+                  className="bg-[#1e1b27] border-[#2c2839] text-white"
+                  placeholder="John"
+                  value={newEmpForm.firstName}
+                  onChange={(e) => setNewEmpForm({...newEmpForm, firstName: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#a49cba] uppercase">Last Name *</label>
+                <Input 
+                  className="bg-[#1e1b27] border-[#2c2839] text-white"
+                  placeholder="Doe"
+                  value={newEmpForm.lastName}
+                  onChange={(e) => setNewEmpForm({...newEmpForm, lastName: e.target.value})} 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[#a49cba] uppercase flex items-center gap-1">
+                <Mail className="w-3 h-3" /> Work Email *
+              </label>
+              <Input 
+                className="bg-[#1e1b27] border-[#2c2839] text-white"
+                type="email"
+                placeholder="john.doe@company.com"
+                value={newEmpForm.email}
+                onChange={(e) => setNewEmpForm({...newEmpForm, email: e.target.value})} 
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#a49cba] uppercase flex items-center gap-1">
+                  <Phone className="w-3 h-3" /> Phone
+                </label>
+                <Input 
+                  className="bg-[#1e1b27] border-[#2c2839] text-white"
+                  placeholder="+91 9876543210"
+                  value={newEmpForm.phone}
+                  onChange={(e) => setNewEmpForm({...newEmpForm, phone: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#a49cba] uppercase flex items-center gap-1">
+                  <Calendar className="w-3 h-3" /> Date of Birth
+                </label>
+                <Input 
+                  className="bg-[#1e1b27] border-[#2c2839] text-white"
+                  type="date"
+                  value={newEmpForm.dob}
+                  onChange={(e) => setNewEmpForm({...newEmpForm, dob: e.target.value})} 
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#a49cba] uppercase">Department</label>
+                <Select 
+                  options={DEPARTMENTS.map(d => ({ label: d, value: d }))}
+                  value={newEmpForm.department}
+                  onChange={(e) => setNewEmpForm({...newEmpForm, department: e.target.value})}
+                  className="bg-[#1e1b27] border-[#2c2839] text-white"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#a49cba] uppercase">Designation</label>
+                <Input 
+                  className="bg-[#1e1b27] border-[#2c2839] text-white"
+                  placeholder="Software Engineer"
+                  value={newEmpForm.designation}
+                  onChange={(e) => setNewEmpForm({...newEmpForm, designation: e.target.value})} 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[#a49cba] uppercase">Gender</label>
+              <Select 
+                options={[
+                  { label: 'Male', value: 'Male' },
+                  { label: 'Female', value: 'Female' },
+                  { label: 'Other', value: 'Other' }
+                ]}
+                value={newEmpForm.gender}
+                onChange={(e) => setNewEmpForm({...newEmpForm, gender: e.target.value})}
+                className="bg-[#1e1b27] border-[#2c2839] text-white"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-[#a49cba] uppercase flex items-center gap-1">
+                <MapPin className="w-3 h-3" /> Address
+              </label>
+              <Input 
+                className="bg-[#1e1b27] border-[#2c2839] text-white"
+                placeholder="123 Main St, City, Country"
+                value={newEmpForm.address}
+                onChange={(e) => setNewEmpForm({...newEmpForm, address: e.target.value})} 
+              />
+            </div>
+
+            {/* Salary Configuration */}
+            <div className="bg-[#2c2839]/50 p-4 rounded-lg border border-[#2c2839]">
+              <h4 className="font-bold text-white mb-3 flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-emerald-400" /> Salary Configuration
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-[#a49cba]">Basic Salary</label>
+                  <Input 
+                    className="bg-[#1e1b27] border-[#2c2839] text-white" 
+                    type="number" 
+                    value={newEmpForm.basicSalary} 
+                    onChange={(e) => setNewEmpForm({...newEmpForm, basicSalary: Number(e.target.value)})} 
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#a49cba]">HRA</label>
+                  <Input 
+                    className="bg-[#1e1b27] border-[#2c2839] text-white" 
+                    type="number" 
+                    value={newEmpForm.hra} 
+                    onChange={(e) => setNewEmpForm({...newEmpForm, hra: Number(e.target.value)})} 
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#a49cba]">Allowances</label>
+                  <Input 
+                    className="bg-[#1e1b27] border-[#2c2839] text-white" 
+                    type="number" 
+                    value={newEmpForm.allowances} 
+                    onChange={(e) => setNewEmpForm({...newEmpForm, allowances: Number(e.target.value)})} 
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-[#a49cba]">Deductions</label>
+                  <Input 
+                    className="bg-[#1e1b27] border-[#2c2839] text-white" 
+                    type="number" 
+                    value={newEmpForm.deductions} 
+                    onChange={(e) => setNewEmpForm({...newEmpForm, deductions: Number(e.target.value)})} 
+                  />
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-[#2c2839] flex justify-between text-sm">
+                <span className="text-[#a49cba]">Net Salary</span>
+                <span className="font-bold text-emerald-400">
+                  ₹{(newEmpForm.basicSalary + newEmpForm.hra + newEmpForm.allowances - newEmpForm.deductions).toLocaleString()}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button 
+                className="flex-1 bg-[#8055f6] hover:bg-[#6d44d6]" 
+                onClick={handleAddEmployee}
+                disabled={isCreatingEmployee}
+              >
+                {isCreatingEmployee ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" /> Create Employee
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="secondary" 
+                className="flex-1 bg-[#2c2839] text-white hover:bg-[#3d3559]" 
+                onClick={resetAddForm}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         )}
       </Modal>

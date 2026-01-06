@@ -12,10 +12,8 @@ import {
   doc,
   serverTimestamp,
   getDocs,
-  setDoc,
   Timestamp,
   increment,
-  limit,
   getDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -84,10 +82,10 @@ export async function getOrCreateChat(
   try {
     // Check if chat exists between these two users
     const chatsRef = collection(db, CHAT_COLLECTIONS.CHATS);
+    // Only use array-contains to avoid composite index requirement
     const q = query(
       chatsRef, 
-      where('participants', 'array-contains', currentUser.id),
-      where('type', '==', 'direct')
+      where('participants', 'array-contains', currentUser.id)
     );
     
     const snapshot = await getDocs(q);
@@ -95,7 +93,8 @@ export async function getOrCreateChat(
     
     snapshot.forEach(docSnap => {
       const data = docSnap.data() as Chat;
-      if (data.participants.includes(otherUser.id)) {
+      // Filter for direct chats with the other user on client-side
+      if (data.type === 'direct' && data.participants.includes(otherUser.id)) {
         chatId = docSnap.id;
       }
     });
@@ -182,6 +181,12 @@ export function subscribeToMessages(
   chatId: string, 
   callback: (messages: Message[]) => void
 ): () => void {
+  if (!chatId) {
+    console.warn('subscribeToMessages: No chatId provided');
+    callback([]);
+    return () => {};
+  }
+  
   const messagesRef = collection(db, CHAT_COLLECTIONS.CHATS, chatId, CHAT_COLLECTIONS.MESSAGES);
   const q = query(messagesRef, orderBy('timestamp', 'asc'));
   
@@ -193,6 +198,7 @@ export function subscribeToMessages(
     callback(messages);
   }, (error) => {
     console.error('Error subscribing to messages:', error);
+    callback([]);
   });
 }
 
@@ -203,11 +209,17 @@ export function subscribeToChats(
   userId: string, 
   callback: (chats: Chat[]) => void
 ): () => void {
+  if (!userId) {
+    console.warn('subscribeToChats: No userId provided');
+    callback([]);
+    return () => {};
+  }
+  
   const chatsRef = collection(db, CHAT_COLLECTIONS.CHATS);
+  // Use only array-contains without orderBy to avoid composite index requirement
   const q = query(
     chatsRef,
-    where('participants', 'array-contains', userId),
-    orderBy('updatedAt', 'desc')
+    where('participants', 'array-contains', userId)
   );
   
   return onSnapshot(q, (snapshot) => {
@@ -215,6 +227,12 @@ export function subscribeToChats(
       id: doc.id,
       ...doc.data()
     } as Chat));
+    // Sort client-side by updatedAt descending
+    chats.sort((a, b) => {
+      const timeA = a.updatedAt?.toMillis?.() || a.updatedAt?.seconds * 1000 || 0;
+      const timeB = b.updatedAt?.toMillis?.() || b.updatedAt?.seconds * 1000 || 0;
+      return timeB - timeA;
+    });
     callback(chats);
   }, (error) => {
     console.error('Error subscribing to chats:', error);
@@ -265,6 +283,12 @@ export function subscribeToUnreadCount(
   userId: string,
   callback: (count: number) => void
 ): () => void {
+  if (!userId) {
+    console.warn('subscribeToUnreadCount: No userId provided');
+    callback(0);
+    return () => {};
+  }
+  
   const chatsRef = collection(db, CHAT_COLLECTIONS.CHATS);
   const q = query(chatsRef, where('participants', 'array-contains', userId));
   
@@ -275,6 +299,9 @@ export function subscribeToUnreadCount(
       totalUnread += data.unreadCount?.[userId] || 0;
     });
     callback(totalUnread);
+  }, (error) => {
+    console.error('Error subscribing to unread count:', error);
+    callback(0);
   });
 }
 
@@ -298,32 +325,56 @@ export async function getChat(chatId: string): Promise<Chat | null> {
 
 /**
  * Search users for starting a new chat
+ * This function searches both Firebase employees and falls back to the provided local store
  */
 export async function searchUsersForChat(
   searchTerm: string,
   currentUserId: string,
-  limitCount: number = 10
+  limitCount: number = 10,
+  localEmployees?: any[] // Optional fallback to local store employees
 ): Promise<ChatParticipant[]> {
   try {
-    // This is a simple search - for production, you'd use Algolia or similar
-    const usersRef = collection(db, 'employees');
-    const snapshot = await getDocs(usersRef);
-    
     const users: ChatParticipant[] = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const fullName = `${data.firstName} ${data.lastName}`.toLowerCase();
+    
+    // First try Firebase
+    try {
+      const usersRef = collection(db, 'employees');
+      const snapshot = await getDocs(usersRef);
       
-      if (doc.id !== currentUserId && fullName.includes(searchTerm.toLowerCase())) {
-        users.push({
-          id: doc.id,
-          name: `${data.firstName} ${data.lastName}`,
-          avatar: data.avatarUrl,
-          role: data.role,
-          designation: data.designation
-        });
-      }
-    });
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const fullName = `${data.firstName || ''} ${data.lastName || ''}`.toLowerCase();
+        
+        if (doc.id !== currentUserId && fullName.includes(searchTerm.toLowerCase())) {
+          users.push({
+            id: doc.id,
+            name: `${data.firstName} ${data.lastName}`,
+            avatar: data.avatarUrl,
+            role: data.role,
+            designation: data.designation
+          });
+        }
+      });
+    } catch (firebaseError) {
+      console.warn('Firebase search failed, using local data:', firebaseError);
+    }
+    
+    // If no results from Firebase and localEmployees provided, search local store
+    if (users.length === 0 && localEmployees && localEmployees.length > 0) {
+      localEmployees.forEach(emp => {
+        const fullName = `${emp.firstName || ''} ${emp.lastName || ''}`.toLowerCase();
+        
+        if (emp.id !== currentUserId && fullName.includes(searchTerm.toLowerCase())) {
+          users.push({
+            id: emp.id,
+            name: `${emp.firstName} ${emp.lastName}`,
+            avatar: emp.avatarUrl,
+            role: emp.role,
+            designation: emp.designation
+          });
+        }
+      });
+    }
     
     return users.slice(0, limitCount);
   } catch (error) {

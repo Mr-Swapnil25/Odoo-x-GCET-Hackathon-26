@@ -39,6 +39,8 @@ export interface Employee {
   gender: string;
   dob: string;
   avatarUrl?: string;
+  companyName?: string;
+  companyLogo?: string;
   leaveBalance: Record<LeaveType, number>;
   salary: SalaryStructure;
   documents: string[]; // URLs
@@ -72,4 +74,6 @@ export interface User {
   role: Role;
   name: string;
   avatarUrl?: string;
+  companyName?: string;
+  companyLogo?: string;
 }
