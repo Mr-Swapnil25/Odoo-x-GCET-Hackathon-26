@@ -6,6 +6,7 @@ import { useStore } from '../store';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { Role, LeaveType, Employee } from '../types';
+import { generateEmployeeId, generateHRId } from '../data';
 import { Building2, User, Phone, Mail, Lock, Eye, EyeOff, ArrowRight, Infinity, Hash, Upload, X, ImageIcon } from 'lucide-react';
 import RippleLoader from '../components/RippleLoader';
 import WaveBackground from '../components/WaveBackground';
@@ -128,8 +129,8 @@ export const SignUp = () => {
         return;
     }
 
-    // Generate new Employee object with defaults - using timestamp for unique ID
-    let newId = `EMP${Date.now().toString().slice(-6)}`;
+    // Generate new Employee object with defaults - using auto-generated unique ID
+    let newId = watch('role') === Role.ADMIN ? generateHRId() : generateEmployeeId();
     let companyLogoUrl = '';
     
     // Try Firebase registration first
@@ -211,16 +212,16 @@ export const SignUp = () => {
   return (
     <div className="fixed inset-0 flex w-full bg-[#0F172A] text-white font-sans antialiased overflow-hidden">
       {/* Left Panel: Brand & Visuals - FIXED */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#0a1628] overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#0c0a1d] overflow-hidden">
         {/* Dynamic Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0f2027] via-[#1a3a4a] to-[#0a1628] z-0" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a1333] via-[#0f0d1f] to-[#0c0a1d] z-0" />
         
         {/* Abstract Blobs */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#06b6d4]/25 rounded-full blur-[100px] mix-blend-screen" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#0891b2]/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-[120px]" />
         
         {/* Grid Overlay */}
-        <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#22d3ee 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        <div className="absolute inset-0 z-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#a78bfa 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         
         {/* Content Container */}
         <div className="relative z-10 flex flex-col h-full p-12 justify-between">
@@ -256,7 +257,7 @@ export const SignUp = () => {
       </div>
 
       {/* Right Panel: Sign Up Form */}
-      <div className="w-full lg:w-1/2 relative flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6 bg-[#0F172A] overflow-y-auto">
+      <div className="w-full lg:w-1/2 relative flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6 bg-[#0c0a1d] overflow-y-auto">
         {/* Wave Background */}
         <WaveBackground 
           colorTheme="auth"
@@ -264,25 +265,25 @@ export const SignUp = () => {
         />
         
         {/* Gradient Glow behind form */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#8359f8]/20 rounded-full blur-[100px] z-0 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[100px] z-0 pointer-events-none" />
         
         {/* Sign Up Card */}
         <div 
           className="relative z-10 w-full max-w-[420px] rounded-2xl p-5 sm:p-6 flex flex-col gap-4 my-4 max-h-[90vh]"
           style={{
-            background: 'rgba(30, 41, 59, 0.4)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+            background: 'rgba(20, 16, 40, 0.6)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(139, 92, 246, 0.15)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.05)'
           }}
         >
           {/* Header */}
           <div className="space-y-1 flex-shrink-0">
             <h2 
-              className="text-2xl font-bold tracking-tight italic"
+              className="text-2xl font-bold tracking-tight"
               style={{
-                background: 'linear-gradient(to right, #8359f8, #c084fc, #22d3ee)',
+                background: 'linear-gradient(135deg, #a78bfa 0%, #c4b5fd 50%, #e879f9 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text'
@@ -290,18 +291,18 @@ export const SignUp = () => {
             >
               Create Account
             </h2>
-            <p className="text-slate-400 text-sm">Start managing your team effectively today.</p>
+            <p className="text-violet-200/60 text-sm">Start managing your team effectively today.</p>
           </div>
           
           {/* Role Toggle */}
-          <div className="flex bg-[#1E293B]/60 rounded-lg p-1 flex-shrink-0">
+          <div className="flex bg-[#1a1333]/80 rounded-xl p-1 flex-shrink-0 border border-violet-500/20">
             <button
               type="button"
               onClick={() => setValue('role', Role.EMPLOYEE)}
-              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 selectedRole === Role.EMPLOYEE 
-                  ? 'bg-[#8359f8] text-white shadow-lg' 
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/20' 
+                  : 'text-violet-300/60 hover:text-violet-200'
               }`}
             >
               Employee
@@ -309,10 +310,10 @@ export const SignUp = () => {
             <button
               type="button"
               onClick={() => setValue('role', Role.ADMIN)}
-              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                 selectedRole === Role.ADMIN 
-                  ? 'bg-[#8359f8] text-white shadow-lg' 
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/20' 
+                  : 'text-violet-300/60 hover:text-violet-200'
               }`}
             >
               HR/Admin
@@ -327,13 +328,13 @@ export const SignUp = () => {
             <div className="grid grid-cols-3 gap-3">
               {/* Company Name - Takes 2/3 */}
               <div className="col-span-2 space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Company Name</label>
+                <label className="text-xs font-medium text-violet-300/60 uppercase tracking-wide">Company Name</label>
                 <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400/50" />
                   <input
                     type="text"
                     placeholder="Acme Inc."
-                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    className="w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 outline-none transition-all"
                     {...register('companyName')}
                   />
                 </div>
@@ -342,13 +343,13 @@ export const SignUp = () => {
               
               {/* Company Logo - Takes 1/3 */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Logo</label>
+                <label className="text-xs font-medium text-violet-300/60 uppercase tracking-wide">Logo</label>
                 {logoPreview ? (
                   <div className="relative h-[42px] w-full">
                     <img 
                       src={logoPreview} 
                       alt="Logo" 
-                      className="h-[42px] w-full rounded-lg object-contain border border-slate-600 bg-slate-800/50" 
+                      className="h-[42px] w-full rounded-xl object-contain border border-violet-500/20 bg-[#1a1333]/50" 
                     />
                     <button 
                       type="button"
@@ -359,10 +360,10 @@ export const SignUp = () => {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex items-center justify-center h-[42px] w-full border border-dashed border-slate-600 rounded-lg cursor-pointer hover:border-cyan-500/50 hover:bg-slate-800/30 transition-all group">
+                  <label className="flex items-center justify-center h-[42px] w-full border border-dashed border-violet-500/30 rounded-xl cursor-pointer hover:border-violet-400/50 hover:bg-[#1a1333]/50 transition-all group">
                     <div className="flex items-center gap-1.5">
-                      <Upload className="w-4 h-4 text-slate-500 group-hover:text-cyan-400" />
-                      <span className="text-xs text-slate-500 group-hover:text-cyan-400">Upload</span>
+                      <Upload className="w-4 h-4 text-violet-400/50 group-hover:text-violet-300" />
+                      <span className="text-xs text-violet-400/50 group-hover:text-violet-300">Upload</span>
                     </div>
                     <input 
                       type="file" 
@@ -377,45 +378,45 @@ export const SignUp = () => {
             
             {/* Login ID (Auto-generated) */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wide flex items-center gap-2">
-                Login ID <span className="text-slate-500 normal-case font-normal">(Auto)</span>
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              <label className="text-xs font-medium text-violet-300/60 uppercase tracking-wide flex items-center gap-2">
+                Login ID <span className="text-violet-400/40 normal-case font-normal">(Auto)</span>
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400" />
               </label>
               <div className="relative">
-                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400/50" />
                 <input
                   type="text"
                   value={generatedLoginId}
                   disabled
-                  className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/50 px-4 pl-10 pr-10 py-2.5 text-sm text-slate-400 cursor-not-allowed"
+                  className="w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/50 px-4 pl-10 pr-10 py-2.5 text-sm text-violet-300/60 cursor-not-allowed"
                 />
-                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <Lock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400/30" />
               </div>
             </div>
             
             {/* Full Name & Phone Row */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Full Name</label>
+                <label className="text-xs font-medium text-violet-300/60 uppercase tracking-wide">Full Name</label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400/50" />
                   <input
                     type="text"
                     placeholder="John Doe"
-                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    className="w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 outline-none transition-all"
                     {...register('firstName')}
                   />
                 </div>
                 {errors.firstName && <p className="text-xs text-red-400">{errors.firstName.message}</p>}
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Phone</label>
+                <label className="text-xs font-medium text-violet-300/60 uppercase tracking-wide">Phone</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400/50" />
                   <input
                     type="tel"
                     placeholder="+91 9876543210"
-                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    className="w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 outline-none transition-all"
                     {...register('phone')}
                   />
                 </div>
@@ -427,13 +428,13 @@ export const SignUp = () => {
             
             {/* Work Email */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Work Email</label>
+              <label className="text-xs font-medium text-violet-300/60 uppercase tracking-wide">Work Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400/50" />
                 <input
                   type="email"
                   placeholder="john@company.com"
-                  className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                  className="w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-10 py-2.5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 outline-none transition-all"
                   {...register('email')}
                 />
               </div>
@@ -443,19 +444,19 @@ export const SignUp = () => {
             {/* Password Row - Side by Side */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Password</label>
+                <label className="text-xs font-medium text-violet-300/60 uppercase tracking-wide">Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400/50" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 pr-9 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    className="w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-10 pr-9 py-2.5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 outline-none transition-all"
                     {...register('password')}
                   />
                   <button 
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-violet-400/50 hover:text-violet-300 transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -463,19 +464,19 @@ export const SignUp = () => {
                 {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-slate-400 uppercase tracking-wide">Confirm</label>
+                <label className="text-xs font-medium text-violet-300/60 uppercase tracking-wide">Confirm</label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-violet-400/50" />
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    className="w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-10 pr-9 py-2.5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all"
+                    className="w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-10 pr-9 py-2.5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 outline-none transition-all"
                     {...register('confirmPassword')}
                   />
                   <button 
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-violet-400/50 hover:text-violet-300 transition-colors"
                   >
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -488,11 +489,11 @@ export const SignUp = () => {
             {passwordValue && (
               <div className="space-y-1">
                 <div className="flex gap-1 h-1">
-                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 1 ? 'bg-red-500' : 'bg-slate-700'}`} />
-                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 2 ? 'bg-orange-500' : 'bg-slate-700'}`} />
-                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 3 ? 'bg-yellow-500' : 'bg-slate-700'}`} />
-                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 4 ? 'bg-green-500' : 'bg-slate-700'}`} />
-                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 5 ? 'bg-emerald-400' : 'bg-slate-700'}`} />
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 1 ? 'bg-red-500' : 'bg-violet-500/20'}`} />
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 2 ? 'bg-orange-500' : 'bg-violet-500/20'}`} />
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 3 ? 'bg-yellow-500' : 'bg-violet-500/20'}`} />
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 4 ? 'bg-green-500' : 'bg-violet-500/20'}`} />
+                  <div className={`flex-1 rounded-full transition-colors ${passwordStrength.strength >= 5 ? 'bg-emerald-400' : 'bg-violet-500/20'}`} />
                 </div>
                 <p className={`text-xs ${passwordStrength.color}`}>{passwordStrength.label}</p>
               </div>
@@ -505,17 +506,17 @@ export const SignUp = () => {
                   type="checkbox"
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-slate-600 bg-transparent checked:border-[#8359f8] checked:bg-gradient-to-tr checked:from-[#8359f8] checked:to-pink-500 focus:ring-0 transition-all"
+                  className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-violet-500/30 bg-transparent checked:border-violet-400 checked:bg-gradient-to-tr checked:from-violet-600 checked:to-purple-500 focus:ring-0 transition-all"
                 />
                 <svg className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z"/>
                 </svg>
               </div>
-              <span className="text-sm text-slate-400">
+              <span className="text-sm text-violet-200/50">
                 I agree to the{' '}
-                <a href="#" className="text-cyan-400 hover:underline">Terms of Service</a>
+                <a href="#" className="text-violet-300 hover:underline">Terms of Service</a>
                 {' '}and{' '}
-                <a href="#" className="text-cyan-400 hover:underline">Privacy Policy</a>.
+                <a href="#" className="text-violet-300 hover:underline">Privacy Policy</a>.
               </span>
             </label>
             
@@ -523,8 +524,7 @@ export const SignUp = () => {
             <button 
               type="submit"
               disabled={loading || logoUploading}
-              className="w-full py-3 px-4 rounded-lg text-white font-semibold text-sm shadow-lg tracking-wide flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(131,89,248,0.4)] hover:brightness-110 hover:scale-[1.01]"
-              style={{ background: 'linear-gradient(90deg, #8359f8 0%, #d946ef 100%)' }}
+              className="w-full py-3 px-4 rounded-xl text-white font-semibold text-sm shadow-lg shadow-violet-500/20 tracking-wide flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-violet-500/30 hover:scale-[1.01] bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500"
             >
               <span>{loading || logoUploading ? (logoUploading ? 'Uploading Logo...' : 'Creating Account...') : 'Sign Up'}</span>
               {!loading && !logoUploading && <ArrowRight className="w-4 h-4" />}
@@ -535,11 +535,11 @@ export const SignUp = () => {
           
           {/* Footer - Fixed at bottom */}
           <div className="text-center flex-shrink-0 pt-2">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-violet-200/50">
               Already have an account?{' '}
               <Link 
                 to="/login" 
-                className="font-semibold text-white hover:underline"
+                className="font-semibold text-violet-300 hover:text-violet-200 hover:underline"
               >
                 Sign In
               </Link>
@@ -549,10 +549,10 @@ export const SignUp = () => {
         
         {/* Mobile Brand Mark */}
         <div className="lg:hidden mt-4 flex items-center gap-2 opacity-50">
-          <div className="w-6 h-6 rounded bg-[#8359f8] flex items-center justify-center">
+          <div className="w-6 h-6 rounded bg-violet-600 flex items-center justify-center">
             <Infinity className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-sm font-semibold text-slate-400">Dayflow</span>
+          <span className="text-sm font-semibold text-violet-300">Dayflow</span>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ import {
   Mail, Phone, MapPin, Calendar, User, Copy, Check, MessageCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { DEPARTMENTS } from '../data';
+import { DEPARTMENTS, generateEmployeeId } from '../data';
 import { Role, Employee, LeaveStatus, LeaveType } from '../types';
 import { toast } from 'react-hot-toast';
 import { format, parseISO, isWithinInterval } from 'date-fns';
@@ -183,7 +183,7 @@ export const Employees = () => {
     try {
       const loginId = generateLoginId(newEmpForm.firstName);
       const tempPassword = generatePassword();
-      const newId = `EMP${Date.now().toString().slice(-6)}`;
+      const newId = generateEmployeeId(); // Auto-generate unique ID
       
       const netSalary = newEmpForm.basicSalary + newEmpForm.hra + newEmpForm.allowances - newEmpForm.deductions;
 

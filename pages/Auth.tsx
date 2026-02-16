@@ -144,16 +144,16 @@ export const Login = () => {
   return (
     <div className="fixed inset-0 flex w-full bg-[#0F172A] text-white font-sans antialiased overflow-hidden">
       {/* Left Panel: Brand & Visuals */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#0a1628] overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#0c0a1d] overflow-hidden">
         {/* Dynamic Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0f2027] via-[#1a3a4a] to-[#0a1628] z-0" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a1333] via-[#0f0d1f] to-[#0c0a1d] z-0" />
         
         {/* Abstract Blobs */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#06b6d4]/25 rounded-full blur-[100px] mix-blend-screen" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#0891b2]/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-[120px]" />
         
         {/* Grid Overlay */}
-        <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#22d3ee 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        <div className="absolute inset-0 z-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#a78bfa 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         
         {/* Content Container */}
         <div className="relative z-10 flex flex-col h-full p-12 justify-between">
@@ -189,7 +189,7 @@ export const Login = () => {
       </div>
 
       {/* Right Panel: Login Form */}
-      <div className="w-full lg:w-1/2 relative flex flex-col items-center justify-start lg:justify-center p-6 bg-[#0F172A] overflow-y-auto">
+      <div className="w-full lg:w-1/2 relative flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6 bg-[#0c0a1d] overflow-y-auto">
         {/* Wave Background */}
         <WaveBackground 
           colorTheme="auth"
@@ -197,17 +197,17 @@ export const Login = () => {
         />
         
         {/* Gradient Glow behind form */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#8359f8]/20 rounded-full blur-[100px] z-0 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[100px] z-0 pointer-events-none" />
         
         {/* Login Card */}
         <div 
           className="relative z-10 w-full max-w-[420px] rounded-2xl p-8 sm:p-10 flex flex-col gap-6"
           style={{
-            background: 'rgba(30, 41, 59, 0.4)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+            background: 'rgba(20, 16, 40, 0.6)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(139, 92, 246, 0.15)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.05)'
           }}
         >
           {/* Header */}
@@ -215,7 +215,7 @@ export const Login = () => {
             <h2 
               className="text-3xl font-bold tracking-tight pb-1"
               style={{
-                background: 'linear-gradient(to right, #8359f8, #c084fc, #22d3ee)',
+                background: 'linear-gradient(135deg, #a78bfa 0%, #c4b5fd 50%, #e879f9 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text'
@@ -223,7 +223,7 @@ export const Login = () => {
             >
               Welcome Back
             </h2>
-            <p className="text-slate-400 text-sm font-normal">Enter your details to access your workspace.</p>
+            <p className="text-violet-200/60 text-sm font-normal">Enter your details to access your workspace.</p>
           </div>
           
           {/* Form */}
@@ -234,16 +234,16 @@ export const Login = () => {
                 type="email"
                 id="email"
                 placeholder="Email address"
-                className="peer block w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-11 pb-2.5 pt-5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 appearance-none transition-all duration-300 placeholder-transparent outline-none"
+                className="peer block w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-11 pb-2.5 pt-5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 appearance-none transition-all duration-300 placeholder-transparent outline-none"
                 {...register('email')}
               />
               <label 
                 htmlFor="email"
-                className="absolute left-11 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-sm text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-cyan-400 cursor-text"
+                className="absolute left-11 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-sm text-violet-300/60 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-violet-400 cursor-text"
               >
                 Email address
               </label>
-              <Mail className="absolute left-3 top-4 w-5 h-5 text-slate-500 transition-colors peer-focus:text-cyan-400" />
+              <Mail className="absolute left-3 top-4 w-5 h-5 text-violet-400/50 transition-colors peer-focus:text-violet-400" />
               {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email.message}</p>}
             </div>
             
@@ -253,21 +253,21 @@ export const Login = () => {
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 placeholder="Password"
-                className="peer block w-full rounded-lg border border-slate-700 bg-[#1E293B]/80 px-4 pl-11 pr-10 pb-2.5 pt-5 text-sm text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 appearance-none transition-all duration-300 placeholder-transparent outline-none"
+                className="peer block w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-11 pr-10 pb-2.5 pt-5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 appearance-none transition-all duration-300 placeholder-transparent outline-none"
                 {...register('password')}
               />
               <label 
                 htmlFor="password"
-                className="absolute left-11 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-sm text-slate-400 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-cyan-400 cursor-text"
+                className="absolute left-11 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-sm text-violet-300/60 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-violet-400 cursor-text"
               >
                 Password
               </label>
-              <Lock className="absolute left-3 top-4 w-5 h-5 text-slate-500 transition-colors peer-focus:text-cyan-400" />
+              <Lock className="absolute left-3 top-4 w-5 h-5 text-violet-400/50 transition-colors peer-focus:text-violet-400" />
               {/* Toggle Visibility */}
               <button 
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-4 text-slate-500 hover:text-white transition-colors focus:outline-none"
+                className="absolute right-3 top-4 text-violet-400/50 hover:text-violet-300 transition-colors focus:outline-none"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -282,15 +282,15 @@ export const Login = () => {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-slate-600 bg-transparent checked:border-[#8359f8] checked:bg-gradient-to-tr checked:from-[#8359f8] checked:to-pink-500 focus:ring-0 focus:ring-offset-0 transition-all"
+                    className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-violet-500/30 bg-transparent checked:border-violet-400 checked:bg-violet-500 focus:ring-0 focus:ring-offset-0 transition-all"
                   />
                   <svg className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z"/>
                   </svg>
                 </div>
-                <span className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">Remember me</span>
+                <span className="text-sm text-violet-200/50 group-hover:text-violet-200/70 transition-colors">Remember me</span>
               </label>
-              <a href="#" className="text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors hover:underline">
+              <a href="#" className="text-sm font-medium text-violet-300 hover:text-violet-200 transition-colors hover:underline">
                 Forgot Password?
               </a>
             </div>
@@ -299,8 +299,7 @@ export const Login = () => {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-lg text-white font-semibold text-sm shadow-lg tracking-wide flex items-center justify-center gap-2 mt-4 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(131,89,248,0.4)] hover:brightness-110 hover:scale-[1.01]"
-              style={{ background: 'linear-gradient(90deg, #8359f8 0%, #d946ef 100%)' }}
+              className="w-full py-3.5 px-4 rounded-xl text-white font-semibold text-sm shadow-lg shadow-violet-500/20 tracking-wide flex items-center justify-center gap-2 mt-4 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-violet-500/30 hover:scale-[1.01] bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500"
             >
               <span>{loading ? 'Signing in...' : 'Sign In'}</span>
               {!loading && <ArrowRight className="w-4 h-4" />}
@@ -309,9 +308,9 @@ export const Login = () => {
           
           {/* Divider */}
           <div className="relative flex items-center py-2">
-            <div className="flex-1 border-t border-slate-700"></div>
-            <span className="px-4 text-sm text-slate-500">or continue with</span>
-            <div className="flex-1 border-t border-slate-700"></div>
+            <div className="flex-1 border-t border-violet-500/20"></div>
+            <span className="px-4 text-sm text-violet-300/40">or continue with</span>
+            <div className="flex-1 border-t border-violet-500/20"></div>
           </div>
           
           {/* Google Sign-In Button */}
@@ -319,7 +318,7 @@ export const Login = () => {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading}
-            className="w-full py-3 px-4 rounded-lg bg-slate-800/50 border border-slate-700 text-white font-medium text-sm flex items-center justify-center gap-3 transition-all duration-300 hover:bg-slate-700/50 hover:border-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 px-4 rounded-xl bg-[#1a1333]/80 border border-violet-500/20 text-white font-medium text-sm flex items-center justify-center gap-3 transition-all duration-300 hover:bg-[#1a1333] hover:border-violet-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {googleLoading ? (
               <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -336,17 +335,11 @@ export const Login = () => {
           
           {/* Footer */}
           <div className="text-center pt-2">
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-violet-200/50">
               Don't have an account?{' '}
               <Link 
                 to="/signup" 
-                className="font-semibold hover:opacity-80 transition-opacity"
-                style={{
-                  background: 'linear-gradient(to right, #8359f8, #d946ef)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
+                className="font-semibold text-violet-300 hover:text-violet-200 hover:underline transition-opacity"
               >
                 Sign Up
               </Link>
@@ -356,10 +349,10 @@ export const Login = () => {
         
         {/* Mobile Brand Mark */}
         <div className="lg:hidden mt-8 flex items-center gap-2 opacity-50">
-          <div className="w-6 h-6 rounded bg-[#8359f8] flex items-center justify-center">
+          <div className="w-6 h-6 rounded bg-violet-600 flex items-center justify-center">
             <Infinity className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-sm font-semibold text-slate-400">Dayflow</span>
+          <span className="text-sm font-semibold text-violet-300">Dayflow</span>
         </div>
       </div>
     </div>
