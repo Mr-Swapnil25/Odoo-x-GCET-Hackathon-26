@@ -80,6 +80,10 @@ export async function getOrCreateChat(
   otherUser: ChatParticipant
 ): Promise<string> {
   try {
+    console.log('🔍 getOrCreateChat called');
+    console.log('  - Current user:', currentUser.id, currentUser.name);
+    console.log('  - Other user:', otherUser.id, otherUser.name);
+    
     // Check if chat exists between these two users
     const chatsRef = collection(db, CHAT_COLLECTIONS.CHATS);
     // Only use array-contains to avoid composite index requirement
@@ -96,11 +100,13 @@ export async function getOrCreateChat(
       // Filter for direct chats with the other user on client-side
       if (data.type === 'direct' && data.participants.includes(otherUser.id)) {
         chatId = docSnap.id;
+        console.log('  ✅ Found existing chat:', chatId);
       }
     });
     
     // Create new chat if doesn't exist
     if (!chatId) {
+      console.log('  📝 Creating new chat...');
       const newChatRef = await addDoc(collection(db, CHAT_COLLECTIONS.CHATS), {
         participants: [currentUser.id, otherUser.id],
         participantDetails: {
@@ -119,6 +125,7 @@ export async function getOrCreateChat(
         updatedAt: serverTimestamp()
       });
       chatId = newChatRef.id;
+      console.log('  ✅ New chat created:', chatId);
     }
     
     return chatId;
@@ -142,6 +149,12 @@ export async function sendMessage(
   replyTo?: Message['replyTo']
 ): Promise<string> {
   try {
+    console.log('📤 Sending message...');
+    console.log('  - Chat ID:', chatId);
+    console.log('  - Sender:', senderId, senderName);
+    console.log('  - Receiver:', receiverId);
+    console.log('  - Text:', text.substring(0, 50));
+    
     // Add message to subcollection
     const messagesRef = collection(db, CHAT_COLLECTIONS.CHATS, chatId, CHAT_COLLECTIONS.MESSAGES);
     const messageDoc = await addDoc(messagesRef, {
@@ -157,6 +170,8 @@ export async function sendMessage(
       replyTo: replyTo || null
     });
     
+    console.log('  ✅ Message added:', messageDoc.id);
+    
     // Update chat's last message and unread count
     const chatRef = doc(db, CHAT_COLLECTIONS.CHATS, chatId);
     await updateDoc(chatRef, {
@@ -166,6 +181,8 @@ export async function sendMessage(
       [`unreadCount.${receiverId}`]: increment(1),
       updatedAt: serverTimestamp()
     });
+    
+    console.log('  ✅ Chat updated with last message');
     
     return messageDoc.id;
   } catch (error) {
@@ -187,10 +204,13 @@ export function subscribeToMessages(
     return () => {};
   }
   
+  console.log('📡 Subscribing to messages for chat:', chatId);
+  
   const messagesRef = collection(db, CHAT_COLLECTIONS.CHATS, chatId, CHAT_COLLECTIONS.MESSAGES);
   const q = query(messagesRef, orderBy('timestamp', 'asc'));
   
   return onSnapshot(q, (snapshot) => {
+    console.log('📨 Messages snapshot received, docs:', snapshot.docs.length);
     const messages: Message[] = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -215,6 +235,8 @@ export function subscribeToChats(
     return () => {};
   }
   
+  console.log('📡 Subscribing to chats for user:', userId);
+  
   const chatsRef = collection(db, CHAT_COLLECTIONS.CHATS);
   // Use only array-contains without orderBy to avoid composite index requirement
   const q = query(
@@ -223,10 +245,15 @@ export function subscribeToChats(
   );
   
   return onSnapshot(q, (snapshot) => {
-    const chats: Chat[] = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Chat));
+    console.log('📨 Chat snapshot received, docs:', snapshot.docs.length);
+    const chats: Chat[] = snapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log('  - Chat:', doc.id, 'participants:', data.participants);
+      return {
+        id: doc.id,
+        ...data
+      } as Chat;
+    });
     // Sort client-side by updatedAt descending
     chats.sort((a, b) => {
       const timeA = a.updatedAt?.toMillis?.() || a.updatedAt?.seconds * 1000 || 0;

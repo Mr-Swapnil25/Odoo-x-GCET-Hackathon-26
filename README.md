@@ -151,19 +151,21 @@
 
 ### 🎯 Live Application
 
-> **Coming Soon** - Deploy with Firebase Hosting or Vercel
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Visit_DayFlow-6e3df5?style=for-the-badge&logo=firebase&logoColor=white)](https://odoo-x-gcet-hackathon-26.web.app)
+
+**🌐 https://odoo-x-gcet-hackathon-26.web.app**
 
 <img src="https://user-images.githubusercontent.com/74038190/212284158-e840e285-664b-44d7-b79b-e264b5e54825.gif" width="400">
 
-### Quick Start Credentials (Demo Mode)
+### Quick Start Credentials
 ```
-Admin Account:
-  Email: admin@dayflow.com
-  Password: Admin123!
+👤 Admin Account:
+  📧 Email: admin@dayflow.com
+  🔑 Password: Admin@123
 
-Employee Account:
-  Email: john@dayflow.com  
-  Password: Employee123!
+👤 Employee Account:
+  📧 Email: employee@dayflow.com  
+  🔑 Password: Employee@123
 ```
 
 </div>
@@ -268,6 +270,18 @@ yarn dev
 ```
 
 🎉 Open [http://localhost:5173](http://localhost:5173)
+
+### Step 6: Deploy to Firebase Hosting
+
+```bash
+# Build production version
+npm run build
+
+# Deploy to Firebase
+firebase deploy --only hosting
+```
+
+🚀 Your app will be live at: `https://your-project-id.web.app`
 
 </details>
 

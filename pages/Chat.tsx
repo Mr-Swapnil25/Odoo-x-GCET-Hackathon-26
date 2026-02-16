@@ -400,6 +400,12 @@ const Chat: React.FC = () => {
   
   const currentUserId = currentUser?.id || '';
   
+  // Debug log
+  useEffect(() => {
+    console.log('🔍 Chat Component - Current User:', currentUser);
+    console.log('🔍 Chat Component - Current User ID:', currentUserId);
+  }, [currentUser, currentUserId]);
+  
   // Check mobile view
   useEffect(() => {
     const checkMobile = () => setIsMobileView(window.innerWidth < 768);
@@ -425,9 +431,18 @@ const Chat: React.FC = () => {
   
   // Subscribe to chats
   useEffect(() => {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+      console.log('⚠️ No currentUserId, skipping chat subscription');
+      return;
+    }
+    
+    console.log('📡 Setting up chat subscription for:', currentUserId);
     
     const unsubscribe = subscribeToChats(currentUserId, (updatedChats) => {
+      console.log('📨 Received chats update:', updatedChats.length, 'chats');
+      updatedChats.forEach(chat => {
+        console.log('  - Chat:', chat.id, 'participants:', chat.participants, 'lastMessage:', chat.lastMessage?.substring(0, 30));
+      });
       setChats(updatedChats);
       setLoading(false);
     });

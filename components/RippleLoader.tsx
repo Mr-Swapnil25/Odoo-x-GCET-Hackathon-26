@@ -13,8 +13,8 @@ const RippleLoader: React.FC<RippleLoaderProps> = ({
   icon,
   size = 280,
   duration = 2.5,
-  logoColor = "#00fa4fff",
-  rippleColor = "139, 92, 246", // purple RGB values
+  logoColor = "#ffffff",
+  rippleColor = "6, 182, 212", // #06b6d4 cyan - high visibility against dark purple background
 }) => {
   const baseInset = 40;
   const rippleBoxes = Array.from({ length: 5 }, (_, i) => ({
@@ -62,7 +62,7 @@ const RippleLoader: React.FC<RippleLoaderProps> = ({
         style={{
           inset: '35%',
           zIndex: 100,
-          background: `radial-gradient(circle, rgba(167, 251, 12, 0.63) 0%, rgba(${rippleColor}, 0.3) 50%, transparent 70%)`,
+          background: `radial-gradient(circle, rgba(6, 182, 212, 0.6) 0%, rgba(${rippleColor}, 0.35) 50%, transparent 70%)`,
         }}
         animate={{
           opacity: [0.6, 1, 0.6],
@@ -81,11 +81,11 @@ const RippleLoader: React.FC<RippleLoaderProps> = ({
           <motion.span
             className="w-full h-full"
             animate={{ 
-              color: [logoColor, "#fff7f7ff", logoColor],
+              color: [logoColor, "#ffffff", logoColor],
               filter: [
-                "drop-shadow(0 0 8px rgba(55, 9, 241, 0.84))",
-                "drop-shadow(0 0 20px rgba(55, 9, 241, 0.84))",
-                "drop-shadow(0 0 8px rgba(55, 9, 241, 0.84))",
+                "drop-shadow(0 0 8px rgba(6, 182, 212, 0.9))",
+                "drop-shadow(0 0 24px rgba(6, 182, 212, 0.95))",
+                "drop-shadow(0 0 8px rgba(6, 182, 212, 0.9))",
               ]
             }}
             transition={{

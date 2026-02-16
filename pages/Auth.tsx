@@ -144,16 +144,16 @@ export const Login = () => {
   return (
     <div className="fixed inset-0 flex w-full bg-[#0F172A] text-white font-sans antialiased overflow-hidden">
       {/* Left Panel: Brand & Visuals */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#0a0f1e] overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#0a1628] overflow-hidden">
         {/* Dynamic Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#0f172a] z-0" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0f2027] via-[#1a3a4a] to-[#0a1628] z-0" />
         
         {/* Abstract Blobs */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#8359f8]/30 rounded-full blur-[100px] mix-blend-screen" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-500/20 rounded-full blur-[120px] mix-blend-screen" />
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#06b6d4]/25 rounded-full blur-[100px] mix-blend-screen" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-[#0891b2]/20 rounded-full blur-[120px] mix-blend-screen" />
         
         {/* Grid Overlay */}
-        <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#6366f1 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        <div className="absolute inset-0 z-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#22d3ee 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         
         {/* Content Container */}
         <div className="relative z-10 flex flex-col h-full p-12 justify-between">
