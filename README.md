@@ -327,31 +327,6 @@ firebase deploy --only hosting
 
 ---
 
-## 📸 Screenshots
-
-<div align="center">
-
-### 🔐 Authentication
-
-| Login Page | Sign Up Page |
-|:----------:|:------------:|
-| ![Login](https://via.placeholder.com/400x250/1e1b4b/ffffff?text=Login+Page) | ![SignUp](https://via.placeholder.com/400x250/1e1b4b/ffffff?text=Sign+Up+Page) |
-
-### 🎨 Role-Based Dashboards
-
-| Admin Dashboard (Blue Theme) | Employee Dashboard (Purple Theme) |
-|:----------------------------:|:---------------------------------:|
-| ![Admin](https://via.placeholder.com/400x250/1e40af/ffffff?text=Admin+Dashboard) | ![Employee](https://via.placeholder.com/400x250/7c3aed/ffffff?text=Employee+Dashboard) |
-
-### 📱 Responsive Design
-
-| Desktop | Tablet | Mobile |
-|:-------:|:------:|:------:|
-| ![Desktop](https://via.placeholder.com/250x150/0f172a/ffffff?text=Desktop) | ![Tablet](https://via.placeholder.com/200x150/0f172a/ffffff?text=Tablet) | ![Mobile](https://via.placeholder.com/150x200/0f172a/ffffff?text=Mobile) |
-
-</div>
-
----
 
 ## 🏗️ Project Structure
 
@@ -452,10 +427,10 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 <img src="https://user-images.githubusercontent.com/74038190/235294012-0a55e343-37ad-4b0f-924f-c8431d9d2483.gif" width="100">
 
-### **Swapnil Jadhav**
+### **Swapnil Debnath**
 
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Mr-Swapnil25)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/swapnil-jadhav)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/swapnil-debnath-8a0149340/)
 
 </div>
 
