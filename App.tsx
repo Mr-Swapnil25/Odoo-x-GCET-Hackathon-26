@@ -4,20 +4,17 @@ import { useStore } from './store';
 import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Auth';
-import { SignUp } from './pages/SignUp';
 import { Dashboard } from './pages/Dashboard';
-import { Attendance } from './pages/Attendance';
-import { Leaves } from './pages/Leaves';
-import { Employees } from './pages/Employees';
-import { Profile } from './pages/Profile';
-import { Payroll } from './pages/Payroll';
-import Chat from './pages/Chat';
-import { Role } from './types';
-import { AIChatbot } from './components/AIChatbot';
+import { TaskTracking } from './pages/TaskTracking';
+import { TaskManagement } from './pages/TaskManagement';
+import { Users } from './pages/Users';
+import { Reports } from './pages/Reports';
+import { UserProfile } from './pages/UserProfile';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
-  const { currentUser } = useStore();
+  const { currentUser, isLoading } = useStore();
+  if (isLoading) return null;
   if (!currentUser) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
@@ -25,16 +22,16 @@ const ProtectedRoute = ({ children }: { children?: React.ReactNode }) => {
 // Admin Route Component
 const AdminRoute = ({ children }: { children?: React.ReactNode }) => {
   const { currentUser } = useStore();
-  if (!currentUser || currentUser.role !== Role.ADMIN) return <Navigate to="/" replace />;
+  if (!currentUser || currentUser.role !== 'ADMIN') return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
 function App() {
-  const { initializeData } = useStore();
+  const { initializeSession } = useStore();
 
   useEffect(() => {
-    initializeData();
-  }, [initializeData]);
+    initializeSession();
+  }, [initializeSession]);
 
   return (
     <>
@@ -63,7 +60,7 @@ function App() {
       <HashRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
+          <Route path="/auth/callback" element={<Login />} />
           
           <Route path="/" element={
             <ProtectedRoute>
@@ -71,28 +68,23 @@ function App() {
             </ProtectedRoute>
           }>
             <Route index element={<Dashboard />} />
-            <Route path="attendance" element={<Attendance />} />
-            <Route path="leaves" element={<Leaves />} />
-            <Route path="profile" element={<Profile />} />
-            
-            <Route path="employees" element={
+            <Route path="tasks" element={<TaskTracking />} />
+            <Route path="my-tasks" element={<TaskManagement />} />
+            <Route path="users" element={
               <AdminRoute>
-                <Employees />
+                <Users />
               </AdminRoute>
             } />
-
-            <Route path="payroll" element={
-               <Payroll />
+            <Route path="profile" element={<UserProfile />} />
+            <Route path="reports" element={
+              <AdminRoute>
+                <Reports />
+              </AdminRoute>
             } />
-            
-            <Route path="chat" element={<Chat />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        
-        {/* AI Chatbot - Available on all authenticated pages */}
-        <AIChatbot />
       </HashRouter>
     </>
   );

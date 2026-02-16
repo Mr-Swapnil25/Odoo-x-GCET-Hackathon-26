@@ -1,5 +1,6 @@
 {
-  "name": "dayflow-hrms",
+  "name": "task-manager-system",
+  "description": "Role-based task management system",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -7,14 +8,13 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "firebase:deploy": "firebase deploy"
+    "server:dev": "npm --prefix server run dev",
+    "server:migrate": "npm --prefix server run migrate"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "3.3.4",
     "clsx": "^2.1.0",
     "date-fns": "3.6.0",
-    "firebase": "^10.14.1",
     "framer-motion": "^12.23.26",
     "lucide-react": "0.363.0",
     "react": "^19.2.3",
@@ -23,7 +23,6 @@
     "react-hook-form": "7.51.1",
     "react-hot-toast": "2.4.1",
     "react-router-dom": "6.22.3",
-    "recharts": "2.12.3",
     "tailwind-merge": "^2.2.2",
     "zod": "3.22.4",
     "zustand": "^5.0.9"

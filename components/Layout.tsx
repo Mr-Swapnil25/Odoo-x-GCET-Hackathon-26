@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
 import WaveBackground from './WaveBackground';
-import { ThemeProvider, useTheme, getThemeByRole } from '../lib/ThemeContext';
+import { ThemeProvider } from '../lib/ThemeContext';
 import { 
   LayoutDashboard, 
   Users, 
@@ -16,67 +16,18 @@ import {
   Bell,
   Search,
   ChevronDown,
-  Settings,
-  Infinity,
-  MessageCircle,
-  LogIn,
-  LogOutIcon
+  Infinity
 } from 'lucide-react';
-import { Role } from '../types';
 import { cn } from './UI';
-import { format } from 'date-fns';
-import { toast } from 'react-hot-toast';
 
 export const Layout = () => {
-  const { currentUser, logout, checkIn, checkOut, attendance } = useStore();
+  const { currentUser, logout } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  // Check in state
-  const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const todayAttendance = useMemo(() => {
-    if (!currentUser) return null;
-    return attendance.find(a => a.employeeId === currentUser.id && a.date === todayStr);
-  }, [attendance, currentUser, todayStr]);
-
-  const isCheckedIn = !!todayAttendance?.checkIn && !todayAttendance?.checkOut;
-  const checkInTime = todayAttendance?.checkIn ? new Date(todayAttendance.checkIn) : null;
-
-  // Update time every minute
-  useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Calculate time since check in
-  const timeSinceCheckIn = useMemo(() => {
-    if (!checkInTime) return '';
-    const diff = currentTime.getTime() - checkInTime.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
-  }, [checkInTime, currentTime]);
-
-  // Handle check in/out
-  const handleCheckIn = () => {
-    if (currentUser) {
-      checkIn(currentUser.id);
-      toast.success('Checked in successfully!');
-    }
-  };
-
-  const handleCheckOut = () => {
-    if (currentUser) {
-      checkOut(currentUser.id);
-      toast.success('Checked out successfully!');
-    }
-  };
 
   // Hidden demo reset shortcut: Ctrl+Shift+R
   useEffect(() => {
@@ -116,29 +67,26 @@ export const Layout = () => {
 
   if (!currentUser) return null;
 
-  const isAdmin = currentUser.role === Role.ADMIN;
+  const isAdmin = currentUser.role === 'ADMIN';
 
   // Navigation items based on role
   const navItems = isAdmin 
     ? [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/employees', icon: Users, label: 'Employees' },
-        { to: '/attendance', icon: CalendarCheck, label: 'Attendance' },
-        { to: '/leaves', icon: Clock, label: 'Leaves' },
-        { to: '/payroll', icon: FileText, label: 'Payroll' },
-        { to: '/chat', icon: MessageCircle, label: 'Messages' },
+        { to: '/users', icon: Users, label: 'Users' },
+        { to: '/tasks', icon: CalendarCheck, label: 'All Tasks' },
+        { to: '/my-tasks', icon: Clock, label: 'Task Management' },
+        { to: '/reports', icon: FileText, label: 'Analytics' },
       ]
     : [
         { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/attendance', icon: CalendarCheck, label: 'Attendance' },
-        { to: '/leaves', icon: Clock, label: 'Leaves' },
-        { to: '/payroll', icon: FileText, label: 'Payroll' },
-        { to: '/chat', icon: MessageCircle, label: 'Messages' },
+        { to: '/tasks', icon: CalendarCheck, label: 'My Tasks' },
+        { to: '/my-tasks', icon: Clock, label: 'Task Status' },
         { to: '/profile', icon: UserCircle, label: 'Profile' },
       ];
 
   // Determine color theme based on user role
-  const waveColorTheme = isAdmin ? 'admin' : 'employee';
+  const waveColorTheme = isAdmin ? 'admin' : 'user';
   
   // Role-based color classes
   const themeColors = {
@@ -160,9 +108,9 @@ export const Layout = () => {
         backdropBlurAmount="lg"
       />
 
-      {/* ═══════════════════════════════════════════════════════════════════════════
+      {/* 
           TOP HEADER NAVIGATION
-      ═══════════════════════════════════════════════════════════════════════════ */}
+       */}
       <header className={cn(
         "fixed top-0 left-0 right-0 z-50 h-16 backdrop-blur-xl border-b",
         isAdmin 
@@ -171,35 +119,26 @@ export const Layout = () => {
       )}>
         <div className="h-full max-w-[1800px] mx-auto px-4 lg:px-6 flex items-center justify-between gap-4">
           
-          {/* ─── LEFT: Logo ─── */}
+          {/*  LEFT: Logo  */}
           <NavLink 
             to="/" 
             className="flex items-center gap-2.5 shrink-0 group"
           >
-            {/* Company Logo or Default */}
-            {currentUser.companyLogo ? (
-              <img 
-                src={currentUser.companyLogo} 
-                alt={currentUser.companyName || 'Company Logo'}
-                className="w-9 h-9 rounded-xl object-contain bg-slate-800/50 shadow-lg transition-all duration-300 group-hover:scale-105"
-              />
-            ) : (
-              <div 
-                className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105"
-                style={{ 
-                  background: `linear-gradient(135deg, ${themeColors.gradientFrom}, ${themeColors.gradientTo})`,
-                  boxShadow: `0 10px 15px -3px ${themeColors.primary}40`
-                }}
-              >
-                <Infinity className="w-5 h-5 text-white" />
-              </div>
-            )}
+            <div 
+              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105"
+              style={{ 
+                background: `linear-gradient(135deg, ${themeColors.gradientFrom}, ${themeColors.gradientTo})`,
+                boxShadow: `0 10px 15px -3px ${themeColors.primary}40`
+              }}
+            >
+              <Infinity className="w-5 h-5 text-white" />
+            </div>
             <span className="text-xl font-bold text-white hidden sm:block">
-              {currentUser.companyName || 'Dayflow'}
+              Task Manager
             </span>
           </NavLink>
 
-          {/* ─── CENTER: Navigation Tabs (Desktop) ─── */}
+          {/*  CENTER: Navigation Tabs (Desktop)  */}
           <nav className={cn(
             "hidden lg:flex items-center gap-1 backdrop-blur-sm rounded-xl p-1.5 border border-white/[0.05]",
             isAdmin ? "bg-slate-800/60" : "bg-[#1a1625]/60"
@@ -233,7 +172,7 @@ export const Layout = () => {
             })}
           </nav>
 
-          {/* ─── RIGHT: Search, Notifications, Profile ─── */}
+          {/*  RIGHT: Search, Notifications, Profile  */}
           <div className="flex items-center gap-3">
             
             {/* Search Bar */}
@@ -244,7 +183,7 @@ export const Layout = () => {
               <Search className="absolute left-3 w-4 h-4" style={{ color: themeColors.primary }} />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search tasks..."
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
                 className={cn(
@@ -263,45 +202,6 @@ export const Layout = () => {
             )}>
               <Search className="w-5 h-5" />
             </button>
-
-            {/* Check In/Check Out Button */}
-            {!isAdmin && (
-              <div className="flex items-center gap-2">
-                {/* Status Dot */}
-                <span className={cn(
-                  "w-3 h-3 rounded-full transition-all",
-                  isCheckedIn 
-                    ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" 
-                    : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
-                )}></span>
-                
-                {isCheckedIn ? (
-                  <div className="flex flex-col items-end">
-                    <span className={cn(
-                      "text-[10px] leading-tight",
-                      isAdmin ? "text-slate-400" : "text-[#a090cb]"
-                    )}>
-                      Since {checkInTime ? format(checkInTime, 'hh:mm a') : ''}
-                    </span>
-                    <button
-                      onClick={handleCheckOut}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-semibold transition-all border border-red-500/30"
-                    >
-                      Check Out
-                      <LogOutIcon className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleCheckIn}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all border border-emerald-500/30"
-                  >
-                    Check IN
-                    <LogIn className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            )}
 
             {/* Notification Bell */}
             <button className={cn(
@@ -350,7 +250,7 @@ export const Layout = () => {
                 <div className="hidden sm:block text-left">
                   <p className="text-sm font-medium text-white leading-tight">{currentUser.name}</p>
                   <p className={cn("text-[10px] leading-tight", isAdmin ? "text-slate-400" : "text-[#a090cb]")}>
-                    {isAdmin ? 'Administrator' : 'Employee'}
+                    {isAdmin ? 'Administrator' : 'User'}
                   </p>
                 </div>
                 <ChevronDown className={cn(
@@ -384,18 +284,8 @@ export const Layout = () => {
                       )}
                     >
                       <UserCircle className="w-4 h-4" />
-                      <span>My Profile</span>
+                      <span>Profile</span>
                     </NavLink>
-                    {isAdmin && (
-                      <NavLink
-                        to="/settings"
-                        onClick={() => setIsProfileDropdownOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-slate-400 hover:text-white hover:bg-white/[0.05] rounded-lg transition-all"
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>Settings</span>
-                      </NavLink>
-                    )}
                   </div>
 
                   {/* Logout */}
@@ -423,9 +313,9 @@ export const Layout = () => {
         </div>
       </header>
 
-      {/* ═══════════════════════════════════════════════════════════════════════════
+      {/* 
           MOBILE MENU OVERLAY
-      ═══════════════════════════════════════════════════════════════════════════ */}
+       */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-[60] lg:hidden">
           {/* Backdrop */}
@@ -445,22 +335,13 @@ export const Layout = () => {
               isAdmin ? "border-slate-700" : "border-[#2d2249]"
             )}>
               <div className="flex items-center gap-2.5">
-                {/* Company Logo or Default */}
-                {currentUser.companyLogo ? (
-                  <img 
-                    src={currentUser.companyLogo} 
-                    alt={currentUser.companyName || 'Company Logo'}
-                    className="w-8 h-8 rounded-lg object-contain bg-slate-800/50"
-                  />
-                ) : (
-                  <div 
-                    className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ background: `linear-gradient(135deg, ${themeColors.gradientFrom}, ${themeColors.gradientTo})` }}
-                  >
-                    <Infinity className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                <span className="text-lg font-bold text-white">{currentUser.companyName || 'Dayflow'}</span>
+                <div 
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: `linear-gradient(135deg, ${themeColors.gradientFrom}, ${themeColors.gradientTo})` }}
+                >
+                  <Infinity className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-lg font-bold text-white">Task Manager</span>
               </div>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -494,7 +375,7 @@ export const Layout = () => {
                       ? "bg-blue-600/20 text-blue-400 border border-blue-600/30" 
                       : "bg-purple-600/20 text-purple-400 border border-purple-600/30"
                   )}>
-                    {isAdmin ? 'Administrator' : 'Employee'}
+                    {isAdmin ? 'Administrator' : 'User'}
                   </span>
                 </div>
               </div>
@@ -559,9 +440,9 @@ export const Layout = () => {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════════════════════
+      {/* 
           MAIN CONTENT AREA
-      ═══════════════════════════════════════════════════════════════════════════ */}
+       */}
       <main className="pt-20 min-h-screen px-4 sm:px-6 lg:px-8 pb-8">
         <div className="max-w-[1400px] mx-auto">
           <Outlet />

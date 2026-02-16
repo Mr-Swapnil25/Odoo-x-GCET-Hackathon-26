@@ -1,27 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useStore } from '../store';
-import { useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { Role } from '../types';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Infinity, Chrome } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Infinity } from 'lucide-react';
 import RippleLoader from '../components/RippleLoader';
 import WaveBackground from '../components/WaveBackground';
-
-// Firebase authentication (optional - gracefully fallback to local auth)
-let firebaseAuth: any = null;
-const loadFirebaseAuth = async () => {
-  try {
-    firebaseAuth = await import('../lib/firebase');
-    return true;
-  } catch (e) {
-    console.log('Firebase not configured, using local authentication');
-    return false;
-  }
-};
-loadFirebaseAuth();
+import { setToken } from '../lib/api';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -31,8 +18,9 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export const Login = () => {
-  const { employees, login } = useStore();
+  const { login, initializeSession } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -41,104 +29,42 @@ export const Login = () => {
     resolver: zodResolver(loginSchema)
   });
 
-  // Firebase Email/Password Login
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    const error = params.get('error');
+    if (error) {
+      if (error === 'oauth_unconfigured') {
+        toast.error('Google sign-in is not configured');
+      } else {
+        toast.error('Google sign-in failed');
+      }
+    }
+    if (token) {
+      setToken(token);
+      initializeSession().then(() => {
+        navigate('/', { replace: true });
+      });
+    }
+  }, [location.search, initializeSession, navigate]);
+
   const onSubmit = async (data: LoginForm) => {
     setLoading(true);
-    
-    try {
-      // Try Firebase authentication first
-      if (firebaseAuth) {
-        const result = await firebaseAuth.signInWithEmail(data.email, data.password);
-        if (result.user) {
-          // Find matching employee or create session
-          const user = employees.find(e => e.email === data.email);
-          if (user) {
-            login({
-              id: user.id,
-              email: user.email,
-              name: `${user.firstName} ${user.lastName}`,
-              role: user.role,
-              companyName: user.companyName,
-              companyLogo: user.companyLogo
-            });
-          } else {
-            // Create user session from Firebase auth
-            login({
-              id: result.user.uid,
-              email: result.user.email || data.email,
-              name: result.user.displayName || data.email.split('@')[0],
-              role: Role.EMPLOYEE
-            });
-          }
-          toast.success('Welcome back!');
-          navigate('/');
-          return;
-        }
-      }
-    } catch (firebaseError: any) {
-      console.log('Firebase auth failed, trying local auth:', firebaseError.message);
-    }
-
-    // Fallback to local authentication
-    const user = employees.find(e => e.email === data.email && e.password === data.password);
-
-    if (user) {
-      login({
-        id: user.id,
-        email: user.email,
-        name: `${user.firstName} ${user.lastName}`,
-        role: user.role,
-        companyName: user.companyName,
-        companyLogo: user.companyLogo
-      });
+    const result = await login(data.email, data.password);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
       toast.success('Welcome back!');
       navigate('/');
-    } else {
-      toast.error('Invalid email or password');
     }
     setLoading(false);
   };
 
   // Google Sign-In
   const handleGoogleSignIn = async () => {
-    if (!firebaseAuth) {
-      toast.error('Firebase not configured for Google Sign-In');
-      return;
-    }
-    
     setGoogleLoading(true);
-    try {
-      const result = await firebaseAuth.signInWithGoogle();
-      if (result.user) {
-        // Find matching employee or create new session
-        const existingEmployee = employees.find(e => e.email === result.user.email);
-        
-        if (existingEmployee) {
-          login({
-            id: existingEmployee.id,
-            email: existingEmployee.email,
-            name: `${existingEmployee.firstName} ${existingEmployee.lastName}`,
-            role: existingEmployee.role
-          });
-        } else {
-          // Create new user session from Google auth
-          login({
-            id: result.user.uid,
-            email: result.user.email || '',
-            name: result.user.displayName || 'Google User',
-            role: Role.EMPLOYEE
-          });
-        }
-        
-        toast.success(`Welcome, ${result.user.displayName || 'User'}!`);
-        navigate('/');
-      }
-    } catch (error: any) {
-      console.error('Google Sign-In error:', error);
-      toast.error(error.message || 'Google Sign-In failed');
-    } finally {
-      setGoogleLoading(false);
-    }
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+    window.location.href = `${apiBase}/auth/google`;
   };
 
   return (
@@ -162,7 +88,7 @@ export const Login = () => {
             <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-[#8359f8] to-cyan-400 flex items-center justify-center shadow-lg shadow-[#8359f8]/20">
               <Infinity className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-white">Dayflow</span>
+            <span className="text-2xl font-bold tracking-tight text-white">Task Manager</span>
           </div>
           
           {/* Ripple Loader Animation */}
@@ -178,11 +104,11 @@ export const Login = () => {
           {/* Tagline */}
           <div className="space-y-4 max-w-lg">
             <h1 className="text-4xl md:text-5xl font-bold leading-tight tracking-tight">
-              Every workday, <br />
+              Every task, <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">perfectly aligned.</span>
             </h1>
             <p className="text-slate-400 text-lg font-light">
-              Experience the future of HR management. Seamless, intuitive, and designed for modern teams.
+              Keep teams aligned with clear priorities, deadlines, and visibility.
             </p>
           </div>
         </div>
@@ -336,13 +262,7 @@ export const Login = () => {
           {/* Footer */}
           <div className="text-center pt-2">
             <p className="text-sm text-violet-200/50">
-              Don't have an account?{' '}
-              <Link 
-                to="/signup" 
-                className="font-semibold text-violet-300 hover:text-violet-200 hover:underline transition-opacity"
-              >
-                Sign Up
-              </Link>
+              Need access? Contact your administrator to create an account.
             </p>
           </div>
         </div>
@@ -352,7 +272,7 @@ export const Login = () => {
           <div className="w-6 h-6 rounded bg-violet-600 flex items-center justify-center">
             <Infinity className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-sm font-semibold text-violet-300">Dayflow</span>
+          <span className="text-sm font-semibold text-violet-300">Task Manager</span>
         </div>
       </div>
     </div>

@@ -1,9 +1,9 @@
 /// <reference lib="webworker" />
 
-// Dayflow PWA Service Worker
+// Task Manager PWA Service Worker
 // Provides offline caching and background sync capabilities
 
-const CACHE_NAME = 'dayflow-v1.0.0';
+const CACHE_NAME = 'task-manager-v1.0.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -11,13 +11,13 @@ const STATIC_ASSETS = [
 ];
 
 // Runtime cache for API responses
-const RUNTIME_CACHE = 'dayflow-runtime-v1';
+const RUNTIME_CACHE = 'task-manager-runtime-v1';
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('📦 Caching static assets');
+      console.log('Caching static assets');
       return cache.addAll(STATIC_ASSETS);
     })
   );
@@ -33,7 +33,7 @@ self.addEventListener('activate', (event) => {
         cacheNames
           .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
           .map((name) => {
-            console.log('🗑️ Deleting old cache:', name);
+            console.log('Deleting old cache:', name);
             return caches.delete(name);
           })
       );
@@ -101,7 +101,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   // For API calls, use network-first with cache fallback
-  if (url.pathname.includes('/api/') || url.hostname.includes('firestore')) {
+  if (url.pathname.includes('/api/')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
@@ -132,14 +132,8 @@ self.addEventListener('fetch', (event) => {
 
 // Background sync for offline actions
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-attendance') {
-    console.log('🔄 Syncing attendance data...');
-    // Sync logic would go here when background sync is needed
-  }
-  
-  if (event.tag === 'sync-leaves') {
-    console.log('🔄 Syncing leave requests...');
-    // Sync logic would go here
+  if (event.tag === 'sync-tasks') {
+    console.log('Syncing task data...');
   }
 });
 
@@ -163,7 +157,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Dayflow', options)
+    self.registration.showNotification(data.title || 'Task Manager', options)
   );
 });
 
@@ -204,4 +198,5 @@ self.addEventListener('message', (event) => {
   }
 });
 
-console.log('🚀 Dayflow Service Worker loaded');
+console.log('Task Manager Service Worker loaded');
+

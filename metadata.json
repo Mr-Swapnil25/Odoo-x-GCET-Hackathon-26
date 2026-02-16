@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Dayflow HRMS",
-  "description": "A comprehensive, frontend-only Human Resource Management System for attendance, leave, and payroll management with role-based access.",
+  "name": "Task Manager System",
+  "description": "A task manager application for assignment, tracking, priorities, comments, and reporting with role-based access.",
   "requestFramePermissions": []
 }

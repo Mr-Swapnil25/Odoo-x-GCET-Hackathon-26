@@ -1,7 +1,7 @@
 {
-  "name": "Dayflow HRMS",
-  "short_name": "Dayflow",
-  "description": "AI-Powered Human Resource Management System - Attendance, Leave, Payroll Management",
+  "name": "Task Manager",
+  "short_name": "TaskMgr",
+  "description": "Manage tasks with role-based access",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0f12",
@@ -36,16 +36,16 @@
   "categories": ["business", "productivity"],
   "shortcuts": [
     {
-      "name": "Check In",
-      "short_name": "Check In",
-      "description": "Quick check-in to work",
-      "url": "/"
+      "name": "My Tasks",
+      "short_name": "Tasks",
+      "description": "Open task list",
+      "url": "/#/tasks"
     },
     {
-      "name": "Apply Leave",
-      "short_name": "Leave",
-      "description": "Apply for leave",
-      "url": "/"
+      "name": "New Task",
+      "short_name": "Manage",
+      "description": "Assign and manage tasks",
+      "url": "/#/my-tasks"
     }
   ],
   "related_applications": [],

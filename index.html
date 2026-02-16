@@ -3,28 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="description" content="Dayflow HRMS - AI-Powered Human Resource Management System for modern teams. Attendance tracking, leave management, payroll processing with intelligent insights." />
-    <meta name="keywords" content="HRMS, HR Management, Attendance, Leave Management, Payroll, AI HR, Employee Management" />
-    <meta name="author" content="Dayflow Team" />
+    <meta name="description" content="Task Manager System - organize tasks, assignments, priorities, and progress in one place." />
+    <meta name="keywords" content="Task Manager, Task Tracking, Task Assignment, Productivity, Team Management" />
+    <meta name="author" content="Task Manager Team" />
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#8055f6" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Dayflow" />
+    <meta name="apple-mobile-web-app-title" content="Task Manager" />
     
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Dayflow HRMS - AI-Powered HR Management" />
-    <meta property="og:description" content="Transform your HR operations with AI-powered attendance, leave management, and intelligent employee insights." />
+    <meta property="og:title" content="Task Manager System" />
+    <meta property="og:description" content="Assign, track, and complete tasks with clear priorities and deadlines." />
     <meta property="og:image" content="/og-image.png" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Dayflow HRMS" />
-    <meta name="twitter:description" content="AI-Powered Human Resource Management System" />
+    <meta name="twitter:title" content="Task Manager System" />
+    <meta name="twitter:description" content="Task tracking and assignment for modern teams." />
     
-    <title>Dayflow - AI-Powered HRMS</title>
+    <title>Task Manager System</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -99,7 +99,6 @@
     "react-dom": "https://esm.sh/react-dom@18.3.1",
     "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
     "react-router-dom": "https://esm.sh/react-router-dom@6.22.3?deps=react@18.3.1,react-dom@18.3.1",
-    "recharts": "https://esm.sh/recharts@2.12.3?deps=react@18.3.1,react-dom@18.3.1",
     "date-fns": "https://esm.sh/date-fns@3.6.0",
     "react-hook-form": "https://esm.sh/react-hook-form@7.51.1?deps=react@18.3.1",
     "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.2",
@@ -118,7 +117,6 @@
   }
 }
 </script>
-  <link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <!-- Loading Screen -->
@@ -136,10 +134,10 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
-              console.log('✅ Service Worker registered:', registration.scope);
+              console.log('Service Worker registered:', registration.scope);
             })
             .catch((error) => {
-              console.log('❌ Service Worker registration failed:', error);
+              console.log('Service Worker registration failed:', error);
             });
         });
       }

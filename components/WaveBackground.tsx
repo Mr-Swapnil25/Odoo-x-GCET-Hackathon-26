@@ -41,7 +41,7 @@ void main() {
 
 export type BlurSize = "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
 
-export type ColorTheme = "purple" | "cyan" | "admin" | "employee" | "auth";
+export type ColorTheme = "purple" | "cyan" | "admin" | "user" | "auth";
 
 interface ColorValues {
   multiplier: number;
@@ -69,21 +69,21 @@ const blurClassMap: Record<BlurSize, string> = {
   "3xl": "backdrop-blur-3xl",
 };
 
-// Predefined color themes - PROFESSIONAL ENTERPRISE-GRADE
+// Predefined color themes - professional, role-based
 const colorThemes: Record<ColorTheme, { r: ColorValues; g: ColorValues; b: ColorValues }> = {
-  // Admin: Professional Deep Blue Theme (Enterprise HR)
+  // Admin: Professional Deep Blue Theme
   admin: {
     r: { multiplier: 0.15, offset: 0.08 },   // Minimal red for clean blue
     g: { multiplier: 0.35, offset: 0.15 },   // Controlled green  
     b: { multiplier: 1.0, offset: 0.55 },    // Strong professional blue
   },
-  // Employee: Professional Purple Theme
-  employee: {
+  // User: Professional Purple Theme
+  user: {
     r: { multiplier: 0.55, offset: 0.25 },   // Purple-tinted red
     g: { multiplier: 0.25, offset: 0.10 },   // Low green for purple
     b: { multiplier: 0.95, offset: 0.60 },   // Strong blue/purple
   },
-  // Purple (default Dayflow theme)
+  // Purple (default theme)
   purple: {
     r: { multiplier: 0.5, offset: 0.2 },
     g: { multiplier: 0.2, offset: 0.1 },

@@ -1,10 +1,8 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import { Role } from '../types';
+import type { Role } from '../types';
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PROFESSIONAL ENTERPRISE HRMS COLOR SYSTEM
-// Role-based theming: Admin (Blue) vs Employee (Purple)
-// ═══════════════════════════════════════════════════════════════════════════
+// Theme system
+// Role-based theming: Admin (Blue) vs User (Purple)
 
 export interface ThemeColors {
   // Primary brand colors
@@ -65,9 +63,7 @@ export interface ThemeColors {
   chartQuaternary: string;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ADMIN THEME - Professional Deep Blue
-// ═══════════════════════════════════════════════════════════════════════════
+// Admin theme - Deep Blue
 const adminTheme: ThemeColors = {
   // Primary brand colors - Deep Blue
   primary: '#1e40af',
@@ -127,10 +123,8 @@ const adminTheme: ThemeColors = {
   chartQuaternary: '#8b5cf6',
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// EMPLOYEE THEME - Professional Purple
-// ═══════════════════════════════════════════════════════════════════════════
-const employeeTheme: ThemeColors = {
+// User theme - Purple
+const userTheme: ThemeColors = {
   // Primary brand colors - Purple
   primary: '#7c3aed',
   primaryHover: '#6d28d9',
@@ -189,9 +183,7 @@ const employeeTheme: ThemeColors = {
   chartQuaternary: '#3b82f6',
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-// THEME CONTEXT
-// ═══════════════════════════════════════════════════════════════════════════
+// Theme context
 
 interface ThemeContextValue {
   theme: ThemeColors;
@@ -214,8 +206,8 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ role, children }) => {
-  const isAdmin = role === Role.ADMIN;
-  const theme = isAdmin ? adminTheme : employeeTheme;
+  const isAdmin = role === 'ADMIN';
+  const theme = isAdmin ? adminTheme : userTheme;
 
   const value = useMemo<ThemeContextValue>(() => ({
     theme,
@@ -260,10 +252,10 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ role, children }) 
 export const useTheme = (): ThemeContextValue => {
   const context = useContext(ThemeContext);
   if (!context) {
-    // Return employee theme as default fallback
+    // Return user theme as default fallback
     return {
-      theme: employeeTheme,
-      role: Role.EMPLOYEE,
+      theme: userTheme,
+      role: 'USER',
       isAdmin: false,
       primaryBtnClass: 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-600/30',
       secondaryBtnClass: 'border-purple-600/30 text-purple-400 hover:bg-purple-600/10',
@@ -277,8 +269,8 @@ export const useTheme = (): ThemeContextValue => {
 
 // Utility function to get theme by role (for components outside context)
 export const getThemeByRole = (role: Role): ThemeColors => {
-  return role === Role.ADMIN ? adminTheme : employeeTheme;
+  return role === 'ADMIN' ? adminTheme : userTheme;
 };
 
-export { adminTheme, employeeTheme };
+export { adminTheme, userTheme };
 export default ThemeContext;

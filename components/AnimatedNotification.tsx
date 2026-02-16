@@ -60,21 +60,16 @@ export interface AnimatedNotificationProps {
 }
 
 const defaultMessages = [
-  "Clocked in for the day ⏰",
-  "Leave request approved ✅",
-  "Payroll processed successfully 💰",
-  "New team member joined! 🎉",
-  "Meeting scheduled for 3 PM 📅",
-  "Performance review completed ⭐",
-  "Attendance marked ✓",
-  "Holiday request submitted 🏖️",
-  "Training session enrolled 📚",
-  "Expense report approved 💳",
-  "Timesheet submitted on time 📝",
-  "Weekly report generated 📊",
-  "Document signed successfully ✍️",
-  "Task completed ahead of schedule 🚀",
-  "Team goal achieved! 🎯"
+  "New task assigned",
+  "Task moved to In Progress",
+  "Deadline updated",
+  "Comment added to a task",
+  "Task completed on time",
+  "Priority escalated to High",
+  "Weekly task report generated",
+  "Overdue task alert",
+  "Task reassigned to a new owner",
+  "Milestone reached for project goals"
 ];
 
 const Avatar: React.FC<{
@@ -442,3 +437,4 @@ const AnimatedNotification: React.FC<AnimatedNotificationProps> = ({
 };
 
 export default AnimatedNotification;
+

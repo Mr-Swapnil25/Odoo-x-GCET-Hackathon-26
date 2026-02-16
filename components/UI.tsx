@@ -1,8 +1,7 @@
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useStore } from '../store';
-import { Role } from '../types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -11,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 // Theme-aware hook for getting role-based colors
 export const useRoleTheme = () => {
   const { currentUser } = useStore();
-  const isAdmin = currentUser?.role === Role.ADMIN;
+  const isAdmin = currentUser?.role === 'ADMIN';
   
   return {
     isAdmin,
@@ -245,7 +244,7 @@ const adminGradients = [
   'from-indigo-500 to-blue-600',
 ];
 
-const employeeGradients = [
+const userGradients = [
   'from-purple-500 to-violet-600',
   'from-violet-500 to-purple-700',
   'from-fuchsia-500 to-purple-600',
@@ -256,7 +255,7 @@ export const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', className }) 
   const theme = useRoleTheme();
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   // Deterministic gradient based on name
-  const gradients = theme.isAdmin ? adminGradients : employeeGradients;
+  const gradients = theme.isAdmin ? adminGradients : userGradients;
   const gradientIndex = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % gradients.length;
   
   const sizes = {
@@ -325,7 +324,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
                 : "text-[#a090cb] hover:text-white hover:bg-[#2d2249]"
             )}
           >
-            ✕
+            x
           </button>
         </div>
         <div className="p-5 overflow-y-auto flex-1">{children}</div>
@@ -357,7 +356,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, c
               "text-sm font-medium flex items-center gap-1",
               trend.isPositive ? "text-emerald-400" : "text-red-400"
             )}>
-              {trend.isPositive ? '↗' : '↘'} {Math.abs(trend.value)}%
+              {trend.isPositive ? '+' : '-'} {Math.abs(trend.value)}%
               <span className={cn("font-normal", theme.textMuted)}>vs last month</span>
             </p>
           )}
