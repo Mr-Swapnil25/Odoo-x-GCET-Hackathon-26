@@ -117,6 +117,74 @@ router.get('/me', requireAuth, async (req, res) => {
   });
 });
 
+// Profile self-update (name only, users cannot change their own email or role)
+const profileUpdateSchema = z.object({
+  name: z.string().min(1).max(100),
+});
+
+router.patch('/profile', requireAuth, async (req, res) => {
+  const parsed = profileUpdateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Name is required (1-100 characters)' });
+  }
+
+  const userId = req.user?.id;
+  const result = await pool.query(
+    'UPDATE users SET name = $1, updated_at = now() WHERE id = $2 RETURNING id, name, email, role, created_at',
+    [parsed.data.name, userId]
+  );
+
+  if (result.rowCount === 0) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  const user = result.rows[0];
+  return res.json({
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      createdAt: user.created_at,
+    },
+  });
+});
+
+// Password change (self-service)
+const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(6),
+});
+
+router.post('/change-password', requireAuth, async (req, res) => {
+  const parsed = passwordChangeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Current password and new password (min 6 chars) are required' });
+  }
+
+  const userId = req.user?.id;
+  const result = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+
+  if (result.rowCount === 0) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  const user = result.rows[0];
+  if (!user.password_hash) {
+    return res.status(400).json({ error: 'Cannot change password for Google-linked accounts' });
+  }
+
+  const ok = await bcrypt.compare(parsed.data.currentPassword, user.password_hash);
+  if (!ok) {
+    return res.status(401).json({ error: 'Current password is incorrect' });
+  }
+
+  const newHash = await bcrypt.hash(parsed.data.newPassword, 10);
+  await pool.query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [newHash, userId]);
+
+  return res.json({ success: true });
+});
+
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
 router.get('/google', (req, res, next) => {

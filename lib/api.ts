@@ -145,3 +145,21 @@ export const getReportsSummary = async () => {
   return res.data || { reports: null };
 };
 
+export const updateProfile = async (data: { name: string }) => {
+  const res = await apiFetch<{ user: any }>(`/auth/profile`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  if (res.error) return { error: res.error };
+  return res.data || {};
+};
+
+export const changePassword = async (data: { currentPassword: string; newPassword: string }) => {
+  const res = await apiFetch<{ success: boolean }>(`/auth/change-password`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (res.error) return { error: res.error };
+  return res.data || { success: true };
+};
+
