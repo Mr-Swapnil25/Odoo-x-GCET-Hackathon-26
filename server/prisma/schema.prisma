@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String?   @map("password_hash")
+  role          Role      @default(USER)
+  googleId      String?   @unique @map("google_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  assignedTasks Task[]    @relation("AssignedTo")
+  createdTasks  Task[]    @relation("CreatedBy")
+  comments      Comment[]
+
+  @@map("users")
+}
+
+model Task {
+  id            String     @id @default(uuid())
+  title         String
+  description   String?
+  status        TaskStatus @default(TODO)
+  priority      Priority   @default(MEDIUM)
+  deadline      DateTime?  @map("due_date")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  assignedToId  String?    @map("assigned_to")
+  assignedTo    User?      @relation("AssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  createdById   String?    @map("created_by")
+  createdBy     User?      @relation("CreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  comments      Comment[]
+
+  @@index([assignedToId])
+  @@index([status])
+  @@index([deadline])
+  @@map("tasks")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String   @map("comment")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  taskId    String   @map("task_id")
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("task_comments")
+}

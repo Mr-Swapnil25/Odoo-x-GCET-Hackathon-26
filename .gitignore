@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Prisma generated client
+server/src/generated
+
 # Environment files
 .env
 .env.local

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
 import { z } from 'zod';
-import { pool } from '../db.js';
+import prisma from '../prisma.js';
 import { requireAuth, signToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -24,19 +24,23 @@ router.post('/bootstrap-admin', async (req, res) => {
     return res.status(400).json({ error: 'Invalid payload' });
   }
 
-  const existing = await pool.query('SELECT COUNT(*)::int as count FROM users');
-  if (existing.rows[0].count > 0) {
+  const count = await prisma.user.count();
+  if (count > 0) {
     return res.status(403).json({ error: 'Bootstrap disabled' });
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   try {
-    const result = await pool.query(
-      'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role',
-      [parsed.data.name, parsed.data.email, passwordHash, 'ADMIN']
-    );
+    const user = await prisma.user.create({
+      data: {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        password: passwordHash,
+        role: 'ADMIN',
+      },
+      select: { id: true, name: true, email: true, role: true },
+    });
 
-    const user = result.rows[0];
     const token = signToken({ id: user.id, role: user.role });
 
     return res.status(201).json({
@@ -49,7 +53,7 @@ router.post('/bootstrap-admin', async (req, res) => {
       }
     });
   } catch (error: any) {
-    if (error?.code === '23505') {
+    if (error?.code === 'P2002') {
       return res.status(409).json({ error: 'Email already exists' });
     }
     return res.status(500).json({ error: 'Failed to create admin' });
@@ -63,21 +67,20 @@ router.post('/login', async (req, res) => {
   }
 
   const { email, password } = parsed.data;
-  const result = await pool.query(
-    'SELECT id, name, email, role, password_hash FROM users WHERE email = $1',
-    [email]
-  );
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, name: true, email: true, role: true, password: true },
+  });
 
-  if (result.rowCount === 0) {
+  if (!user) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  const user = result.rows[0];
-  if (!user.password_hash) {
+  if (!user.password) {
     return res.status(400).json({ error: 'Use Google sign-in for this account' });
   }
 
-  const ok = await bcrypt.compare(password, user.password_hash);
+  const ok = await bcrypt.compare(password, user.password);
   if (!ok) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
@@ -96,23 +99,22 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', requireAuth, async (req, res) => {
   const userId = req.user?.id;
-  const result = await pool.query(
-    'SELECT id, name, email, role, created_at FROM users WHERE id = $1',
-    [userId]
-  );
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, role: true, createdAt: true },
+  });
 
-  if (result.rowCount === 0) {
+  if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
 
-  const user = result.rows[0];
   return res.json({
     user: {
       id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
-      createdAt: user.created_at
+      createdAt: user.createdAt
     }
   });
 });
@@ -129,25 +131,25 @@ router.patch('/profile', requireAuth, async (req, res) => {
   }
 
   const userId = req.user?.id;
-  const result = await pool.query(
-    'UPDATE users SET name = $1, updated_at = now() WHERE id = $2 RETURNING id, name, email, role, created_at',
-    [parsed.data.name, userId]
-  );
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { name: parsed.data.name },
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+    });
 
-  if (result.rowCount === 0) {
+    return res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch {
     return res.status(404).json({ error: 'User not found' });
   }
-
-  const user = result.rows[0];
-  return res.json({
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      createdAt: user.created_at,
-    },
-  });
 });
 
 // Password change (self-service)
@@ -163,24 +165,29 @@ router.post('/change-password', requireAuth, async (req, res) => {
   }
 
   const userId = req.user?.id;
-  const result = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { password: true },
+  });
 
-  if (result.rowCount === 0) {
+  if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
 
-  const user = result.rows[0];
-  if (!user.password_hash) {
+  if (!user.password) {
     return res.status(400).json({ error: 'Cannot change password for Google-linked accounts' });
   }
 
-  const ok = await bcrypt.compare(parsed.data.currentPassword, user.password_hash);
+  const ok = await bcrypt.compare(parsed.data.currentPassword, user.password);
   if (!ok) {
     return res.status(401).json({ error: 'Current password is incorrect' });
   }
 
   const newHash = await bcrypt.hash(parsed.data.newPassword, 10);
-  await pool.query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [newHash, userId]);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: newHash },
+  });
 
   return res.json({ success: true });
 });
@@ -220,4 +227,3 @@ router.get('/google/failure', (_req, res) => {
 });
 
 export default router;
-

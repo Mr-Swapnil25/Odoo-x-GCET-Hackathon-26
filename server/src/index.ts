@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { pool } from './db.js';
+import prisma from './prisma.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import tasksRoutes from './routes/tasks.js';
@@ -41,25 +41,37 @@ if (googleClientId && googleClientSecret) {
             return done(new Error('Google account has no email'));
           }
 
-          const existing = await pool.query(
-            'SELECT id, role, google_id FROM users WHERE google_id = $1 OR email = $2',
-            [profile.id, email]
-          );
+          const existing = await prisma.user.findFirst({
+            where: {
+              OR: [
+                { googleId: profile.id },
+                { email },
+              ],
+            },
+            select: { id: true, role: true, googleId: true },
+          });
 
-          if (existing.rowCount > 0) {
-            const user = existing.rows[0];
-            if (!user.google_id) {
-              await pool.query('UPDATE users SET google_id = $1, updated_at = now() WHERE id = $2', [profile.id, user.id]);
+          if (existing) {
+            if (!existing.googleId) {
+              await prisma.user.update({
+                where: { id: existing.id },
+                data: { googleId: profile.id },
+              });
             }
-            return done(null, { id: user.id, role: user.role });
+            return done(null, { id: existing.id, role: existing.role });
           }
 
-          const insert = await pool.query(
-            'INSERT INTO users (name, email, google_id, role) VALUES ($1, $2, $3, $4) RETURNING id, role',
-            [profile.displayName || email.split('@')[0], email, profile.id, 'USER']
-          );
+          const newUser = await prisma.user.create({
+            data: {
+              name: profile.displayName || email.split('@')[0],
+              email,
+              googleId: profile.id,
+              role: 'USER',
+            },
+            select: { id: true, role: true },
+          });
 
-          return done(null, { id: insert.rows[0].id, role: insert.rows[0].role });
+          return done(null, { id: newUser.id, role: newUser.role });
         } catch (error) {
           return done(error as Error);
         }
@@ -86,4 +98,3 @@ app.use((_req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-
