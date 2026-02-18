@@ -1,379 +1,364 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useStore } from '../store';
-import { Card, CardContent, CardHeader, Button, Input, Avatar, Badge, useRoleTheme, cn } from '../components/UI';
-import { User, Mail, Shield, Calendar, Pencil, X, Check, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Card, Button, Input, Badge, useRoleTheme, cn
+} from '../components/UI';
+import { GlassCard } from '../components/animations/GlassCard';
+import { CountUpNumber } from '../components/animations/CountUpNumber';
+import { StaggerContainer, StaggerItem } from '../components/animations/StaggerContainer';
+import {
+  User, Mail, Shield, Calendar, Edit3, Check, X, Lock, Unlock,
+  ChevronDown, Eye, EyeOff, ClipboardList, CheckCircle2, Clock, AlertTriangle
+} from 'lucide-react';
 import * as api from '../lib/api';
+import toast from 'react-hot-toast';
+
+function getPasswordStrength(pw: string): { level: number; label: string; color: string } {
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^a-zA-Z0-9]/.test(pw)) score++;
+  if (score <= 1) return { level: 1, label: 'Weak', color: '#ef4444' };
+  if (score <= 2) return { level: 2, label: 'Fair', color: '#f59e0b' };
+  if (score <= 3) return { level: 3, label: 'Good', color: '#3b82f6' };
+  return { level: 4, label: 'Strong', color: '#10b981' };
+}
 
 export const UserProfile = () => {
-  const { currentUser } = useStore();
+  const { currentUser, tasks, initializeSession } = useStore();
   const theme = useRoleTheme();
+  const isAdmin = currentUser?.role === 'ADMIN';
 
-  // Name editing state
+  // Name editing
   const [isEditingName, setIsEditingName] = useState(false);
   const [editName, setEditName] = useState(currentUser?.name || '');
   const [savingName, setSavingName] = useState(false);
 
-  // Password change state
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  // Password
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [savingPassword, setSavingPassword] = useState(false);
-  const [showCurrentPw, setShowCurrentPw] = useState(false);
-  const [showNewPw, setShowNewPw] = useState(false);
 
-  const store = useStore();
+  const passwordStrength = useMemo(() => getPasswordStrength(newPassword), [newPassword]);
 
-  if (!currentUser) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-      </div>
-    );
-  }
+  const activityStats = useMemo(() => {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.status === 'COMPLETED').length;
+    const inProgress = tasks.filter(t => t.status === 'IN_PROGRESS').length;
+    const overdue = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'COMPLETED').length;
+    return { total, completed, inProgress, overdue };
+  }, [tasks]);
 
-  const joinDate = currentUser.createdAt
-    ? new Date(currentUser.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : '—';
-
-  // --- Handlers ---
-
-  const handleSaveName = async () => {
+  const handleSaveName = useCallback(async () => {
     const trimmed = editName.trim();
-    if (!trimmed) {
-      toast.error('Name cannot be empty');
-      return;
-    }
-    if (trimmed === currentUser.name) {
+    if (!trimmed || trimmed === currentUser?.name) {
       setIsEditingName(false);
       return;
     }
     setSavingName(true);
     const res = await api.updateProfile({ name: trimmed });
     setSavingName(false);
-
-    if ('error' in res && res.error) {
-      toast.error(res.error as string);
+    if (res.error) {
+      toast.error(typeof res.error === 'string' ? res.error : 'Failed to update name');
       return;
     }
-
-    // Refresh session to pick up the new name
-    store.initializeSession();
-    toast.success('Name updated successfully');
+    await initializeSession();
+    toast.success('Name updated');
     setIsEditingName(false);
-  };
+  }, [editName, currentUser?.name, initializeSession]);
 
-  const handleCancelEditName = () => {
-    setEditName(currentUser.name);
-    setIsEditingName(false);
-  };
-
-  const handleChangePassword = async () => {
-    if (!currentPassword) {
-      toast.error('Enter your current password');
-      return;
-    }
-    if (newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
+  const handleChangePassword = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword) { toast.error('Fill in all fields'); return; }
+    if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return; }
+    if (newPassword.length < 6) { toast.error('Password must be at least 6 characters'); return; }
     setSavingPassword(true);
     const res = await api.changePassword({ currentPassword, newPassword });
     setSavingPassword(false);
-
-    if ('error' in res && res.error) {
-      toast.error(res.error as string);
+    if (res.error) {
+      toast.error(typeof res.error === 'string' ? res.error : 'Failed to change password');
       return;
     }
-
-    toast.success('Password changed successfully');
-    setShowPasswordForm(false);
+    toast.success('Password updated');
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
+    setPasswordOpen(false);
+  }, [currentPassword, newPassword, confirmPassword]);
+
+  if (!currentUser) return null;
+
+  const themeColors = {
+    from: isAdmin ? '#1e40af' : '#7c3aed',
+    to: isAdmin ? '#3b82f6' : '#a78bfa',
   };
 
-  // --- Render ---
+  const createdDate = currentUser.createdAt
+    ? new Date(currentUser.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : 'N/A';
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-white">My Profile</h1>
-        <p className={cn('text-sm', theme.textMuted)}>
-          View and manage your account information.
-        </p>
-      </div>
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Hero Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <GlassCard elevation="high" className="relative overflow-hidden">
+          {/* Gradient Background Blur */}
+          <div
+            className="absolute inset-0 opacity-20 blur-3xl"
+            style={{
+              background: `radial-gradient(ellipse at 30% 30%, ${themeColors.from}60, transparent 70%), radial-gradient(ellipse at 70% 70%, ${themeColors.to}40, transparent 70%)`
+            }}
+          />
 
-      {/* Profile Card */}
-      <Card variant="elevated">
-        <CardHeader>
-          <div className="flex items-center gap-5">
-            <Avatar name={currentUser.name} size="xl" />
-            <div className="flex-1 min-w-0">
+          <div className="relative p-8 flex flex-col sm:flex-row items-center gap-6">
+            {/* Avatar with pulsing ring */}
+            <div className="relative">
+              <div
+                className="w-24 h-24 rounded-2xl flex items-center justify-center text-4xl font-bold text-white shadow-2xl"
+                style={{
+                  background: `linear-gradient(135deg, ${themeColors.from}, ${themeColors.to})`,
+                  boxShadow: `0 20px 40px -10px ${themeColors.from}50`
+                }}
+              >
+                {currentUser.name.charAt(0).toUpperCase()}
+              </div>
+              <div
+                className="absolute -inset-1.5 rounded-2xl animate-pulse-slow pointer-events-none"
+                style={{ border: `2px solid ${themeColors.to}40` }}
+              />
+            </div>
+
+            <div className="text-center sm:text-left flex-1">
+              {/* Editable Name */}
               {isEditingName ? (
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
+                  <Input
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSaveName();
-                      if (e.key === 'Escape') handleCancelEditName();
-                    }}
+                    className="text-lg font-bold w-56"
                     autoFocus
-                    className={cn(
-                      'text-xl font-bold bg-transparent border-b-2 outline-none text-white pb-0.5 w-full max-w-xs',
-                      theme.isAdmin ? 'border-blue-500' : 'border-[#6e3df5]'
-                    )}
-                    disabled={savingName}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                   />
-                  <button
-                    onClick={handleSaveName}
-                    disabled={savingName}
-                    className="p-1.5 rounded-lg hover:bg-emerald-500/20 text-emerald-400 transition-colors disabled:opacity-50"
-                  >
-                    {savingName ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Check className="w-4 h-4" />
-                    )}
+                  <button onClick={handleSaveName} disabled={savingName} className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all">
+                    <Check className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={handleCancelEditName}
-                    disabled={savingName}
-                    className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors disabled:opacity-50"
-                  >
+                  <button onClick={() => { setIsEditingName(false); setEditName(currentUser.name); }} className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <h2 className="text-2xl font-bold text-white truncate">{currentUser.name}</h2>
+                <div className="flex items-center gap-2 justify-center sm:justify-start">
+                  <h1 className="text-2xl font-bold text-white">{currentUser.name}</h1>
                   <button
-                    onClick={() => {
-                      setEditName(currentUser.name);
-                      setIsEditingName(true);
-                    }}
-                    className={cn(
-                      'p-1.5 rounded-lg transition-colors',
-                      theme.isAdmin
-                        ? 'hover:bg-slate-700 text-slate-400'
-                        : 'hover:bg-[#2d2249] text-[#a090cb]'
-                    )}
-                    title="Edit name"
+                    onClick={() => { setIsEditingName(true); setEditName(currentUser.name); }}
+                    className={cn("p-1.5 rounded-lg transition-all hover:bg-white/5", theme.textMuted, "hover:text-white")}
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Edit3 className="w-4 h-4" />
                   </button>
                 </div>
               )}
-              <p className={cn('text-sm mt-1', theme.textMuted)}>{currentUser.email}</p>
-              <Badge
-                variant={currentUser.role === 'ADMIN' ? 'info' : 'default'}
-                className="mt-2"
-              >
-                {currentUser.role === 'ADMIN' ? 'Administrator' : 'User'}
-              </Badge>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
 
-      {/* Account Details Card */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold text-white">Account Details</h3>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Name */}
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'p-2.5 rounded-lg',
-                  theme.isAdmin ? 'bg-slate-700/50' : 'bg-[#2d2249]/50'
-                )}
-              >
-                <User className="w-4 h-4 text-white/70" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn('text-xs font-medium', theme.textMuted)}>Full Name</p>
-                <p className="text-sm text-white truncate">{currentUser.name}</p>
-              </div>
-            </div>
+              <p className={cn("text-sm mt-1 flex items-center gap-1.5 justify-center sm:justify-start", theme.textMuted)}>
+                <Mail className="w-4 h-4" />
+                {currentUser.email}
+              </p>
 
-            {/* Email (read-only) */}
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'p-2.5 rounded-lg',
-                  theme.isAdmin ? 'bg-slate-700/50' : 'bg-[#2d2249]/50'
-                )}
-              >
-                <Mail className="w-4 h-4 text-white/70" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn('text-xs font-medium', theme.textMuted)}>Email Address</p>
-                <p className="text-sm text-white truncate">{currentUser.email}</p>
-                <p className={cn('text-xs mt-0.5', theme.textMuted)}>
-                  Email cannot be changed
-                </p>
-              </div>
-            </div>
-
-            {/* Role */}
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'p-2.5 rounded-lg',
-                  theme.isAdmin ? 'bg-slate-700/50' : 'bg-[#2d2249]/50'
-                )}
-              >
-                <Shield className="w-4 h-4 text-white/70" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn('text-xs font-medium', theme.textMuted)}>Role</p>
-                <p className="text-sm text-white">
-                  {currentUser.role === 'ADMIN' ? 'Administrator' : 'Standard User'}
-                </p>
-              </div>
-            </div>
-
-            {/* Join Date */}
-            <div className="flex items-center gap-3">
-              <div
-                className={cn(
-                  'p-2.5 rounded-lg',
-                  theme.isAdmin ? 'bg-slate-700/50' : 'bg-[#2d2249]/50'
-                )}
-              >
-                <Calendar className="w-4 h-4 text-white/70" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn('text-xs font-medium', theme.textMuted)}>Joined</p>
-                <p className="text-sm text-white">{joinDate}</p>
+              {/* Role Badge */}
+              <div className="mt-3 flex items-center gap-2 justify-center sm:justify-start">
+                <span className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border animate-float",
+                  isAdmin
+                    ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                    : "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                )}>
+                  <Shield className="w-3.5 h-3.5" />
+                  {isAdmin ? 'Administrator' : 'User'}
+                </span>
+                <span className={cn("flex items-center gap-1 text-xs", theme.textMuted)}>
+                  <Calendar className="w-3.5 h-3.5" />
+                  Joined {createdDate}
+                </span>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </GlassCard>
+      </motion.div>
 
-      {/* Security Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Security</h3>
-            {!showPasswordForm && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPasswordForm(true)}
-              >
-                <Lock className="w-4 h-4 mr-2" />
-                Change Password
-              </Button>
+      {/* Activity Stats */}
+      <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3" staggerDelay={0.08}>
+        {[
+          { label: 'Total Tasks', value: activityStats.total, icon: <ClipboardList className="w-4 h-4" />, color: isAdmin ? 'text-blue-400' : 'text-purple-400' },
+          { label: 'Completed', value: activityStats.completed, icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-emerald-400' },
+          { label: 'In Progress', value: activityStats.inProgress, icon: <Clock className="w-4 h-4" />, color: 'text-blue-400' },
+          { label: 'Overdue', value: activityStats.overdue, icon: <AlertTriangle className="w-4 h-4" />, color: 'text-red-400' },
+        ].map((stat) => (
+          <StaggerItem key={stat.label} animation="scaleUp">
+            <Card variant="elevated" className="p-4">
+              <div className="flex items-center gap-3">
+                <span className={stat.color}>{stat.icon}</span>
+                <div>
+                  <p className="text-xl font-bold text-white"><CountUpNumber end={stat.value} /></p>
+                  <p className={cn("text-[10px]", theme.textMuted)}>{stat.label}</p>
+                </div>
+              </div>
+            </Card>
+          </StaggerItem>
+        ))}
+      </StaggerContainer>
+
+      {/* Account Details */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+        <Card>
+          <div className={cn("px-6 py-4 border-b", theme.isAdmin ? "border-slate-800" : "border-[#2d2249]")}>
+            <h2 className="text-lg font-semibold text-white">Account Details</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            {[
+              { icon: <User className="w-4 h-4" />, label: 'Full Name', value: currentUser.name },
+              { icon: <Mail className="w-4 h-4" />, label: 'Email Address', value: currentUser.email },
+              { icon: <Shield className="w-4 h-4" />, label: 'Role', value: isAdmin ? 'Administrator' : 'User' },
+              { icon: <Calendar className="w-4 h-4" />, label: 'Member Since', value: createdDate },
+            ].map((row) => (
+              <div key={row.label} className={cn("flex items-center gap-4 py-2.5 px-3 -mx-3 rounded-lg transition-colors hover:bg-white/[0.03] group")}>
+                <span className={cn("p-2 rounded-lg transition-colors group-hover:bg-white/5", theme.textMuted)}>{row.icon}</span>
+                <div className="flex-1">
+                  <p className={cn("text-[10px] uppercase tracking-wider", theme.textMuted)}>{row.label}</p>
+                  <p className="text-sm font-medium text-white">{row.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Change Password Accordion */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+        <Card>
+          <button
+            onClick={() => setPasswordOpen(!passwordOpen)}
+            className={cn(
+              "w-full flex items-center justify-between px-6 py-4 text-left transition-colors",
+              "hover:bg-white/[0.03]"
             )}
-          </div>
-        </CardHeader>
-        {showPasswordForm && (
-          <CardContent>
-            <div className="space-y-4">
-              {/* Current Password */}
-              <div className="relative">
-                <Input
-                  label="Current Password"
-                  type={showCurrentPw ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Enter current password"
-                  disabled={savingPassword}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCurrentPw(!showCurrentPw)}
-                  className="absolute right-3 top-9.5 text-slate-400 hover:text-white transition-colors"
-                  tabIndex={-1}
-                >
-                  {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-
-              {/* New Password */}
-              <div className="relative">
-                <Input
-                  label="New Password"
-                  type={showNewPw ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimum 6 characters"
-                  disabled={savingPassword}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPw(!showNewPw)}
-                  className="absolute right-3 top-9.5 text-slate-400 hover:text-white transition-colors"
-                  tabIndex={-1}
-                >
-                  {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-
-              {/* Confirm Password */}
-              <Input
-                label="Confirm New Password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter new password"
-                error={
-                  confirmPassword && newPassword !== confirmPassword
-                    ? 'Passwords do not match'
-                    : undefined
-                }
-                disabled={savingPassword}
-              />
-
-              <div className="flex items-center gap-3 pt-2">
-                <Button
-                  onClick={handleChangePassword}
-                  disabled={savingPassword || !currentPassword || !newPassword || !confirmPassword}
-                >
-                  {savingPassword ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Saving…
-                    </>
-                  ) : (
-                    'Update Password'
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setShowPasswordForm(false);
-                    setCurrentPassword('');
-                    setNewPassword('');
-                    setConfirmPassword('');
-                  }}
-                  disabled={savingPassword}
-                >
-                  Cancel
-                </Button>
-              </div>
+          >
+            <div className="flex items-center gap-3">
+              <span className={cn("p-2 rounded-lg", theme.isAdmin ? "bg-blue-500/10 text-blue-400" : "bg-purple-500/10 text-purple-400")}>
+                <Lock className="w-4 h-4" />
+              </span>
+              <h2 className="text-lg font-semibold text-white">Change Password</h2>
             </div>
-          </CardContent>
-        )}
-      </Card>
+            <ChevronDown className={cn("w-5 h-5 transition-transform duration-300", theme.textMuted, passwordOpen && "rotate-180")} />
+          </button>
+
+          <AnimatePresence>
+            {passwordOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="overflow-hidden"
+              >
+                <form onSubmit={handleChangePassword} className={cn("p-6 pt-2 border-t space-y-4", theme.isAdmin ? "border-slate-800" : "border-[#2d2249]")}>
+                  {/* Current Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-1.5">Current Password</label>
+                    <div className="relative">
+                      <Input
+                        type={showCurrent ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        placeholder="Enter current password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrent(!showCurrent)}
+                        className={cn("absolute right-3 top-1/2 -translate-y-1/2", theme.textMuted)}
+                      >
+                        {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* New Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-1.5">New Password</label>
+                    <div className="relative">
+                      <Input
+                        type={showNew ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Enter new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNew(!showNew)}
+                        className={cn("absolute right-3 top-1/2 -translate-y-1/2", theme.textMuted)}
+                      >
+                        {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    {/* Strength Bar */}
+                    {newPassword.length > 0 && (
+                      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mt-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={cn("h-1.5 flex-1 rounded-full overflow-hidden", theme.isAdmin ? "bg-slate-800" : "bg-[#1e1835]")}>
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(passwordStrength.level / 4) * 100}%` }}
+                              transition={{ duration: 0.3 }}
+                              className="h-full rounded-full"
+                              style={{ backgroundColor: passwordStrength.color }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-medium" style={{ color: passwordStrength.color }}>
+                            {passwordStrength.label}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-1.5">Confirm New Password</label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                    />
+                    {confirmPassword && newPassword !== confirmPassword && (
+                      <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button type="submit" disabled={savingPassword}>
+                      {savingPassword ? (
+                        <><span className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full mr-2" /> Updating...</>
+                      ) : (
+                        <><Unlock className="w-4 h-4 mr-1" /> Update Password</>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Card>
+      </motion.div>
     </div>
   );
 };
