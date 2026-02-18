@@ -46,13 +46,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const theme = useRoleTheme();
     
     const variants = {
-      primary: isAdmin
+      primary: theme.isAdmin
         ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-600/25'
         : 'bg-violet-600 text-white hover:bg-violet-700 shadow-sm shadow-violet-600/25',
       secondary: 'bg-[#1a2236] text-white hover:bg-[#222d44]',
       outline: cn(
         'border bg-transparent',
-        isAdmin
+        theme.isAdmin
           ? 'border-white/[0.08] hover:bg-blue-500/10 text-[#A0AABF]'
           : 'border-white/[0.08] hover:bg-violet-500/10 text-[#A0AABF]'
       ),
@@ -73,7 +73,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={cn(
           'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-150 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]',
-          isAdmin 
+          theme.isAdmin 
             ? 'focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0A0E1A]'
             : 'focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-[#0A0E1A]',
           variants[variant],
@@ -122,11 +122,12 @@ Input.displayName = 'Input';
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
-  options: { label: string; value: string }[];
+  options?: { label: string; value: string }[];
+  children?: React.ReactNode;
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, label, error, options, ...props }, ref) => {
+  ({ className, label, error, options, children, ...props }, ref) => {
     const theme = useRoleTheme();
     return (
       <div className="w-full">
@@ -143,11 +144,13 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           )}
           {...props}
         >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-[#111827]">
-              {opt.label}
-            </option>
-          ))}
+          {options
+            ? options.map((opt) => (
+              <option key={opt.value} value={opt.value} className="bg-[#111827]">
+                {opt.label}
+              </option>
+            ))
+            : children}
         </select>
         {error && <p className="mt-1.5 text-sm text-red-400">{error}</p>}
       </div>
