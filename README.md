@@ -401,7 +401,7 @@ npm run dev
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start frontend development server (port 3000) |
+| `npm run dev` | Start frontend development server (port 5173) |
 | `npm run build` | Build frontend for production |
 | `cd server && npm run dev` | Start backend API server (port 4000) |
 | `cd server && npm run migrate` | Run database migrations |
@@ -534,7 +534,7 @@ Create a `.env` file in the **server/** directory:
 
 DATABASE_URL=postgresql://postgres:password@localhost:5432/task_manager
 JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5173
 BACKEND_URL=http://localhost:4000
 PORT=4000
 ```

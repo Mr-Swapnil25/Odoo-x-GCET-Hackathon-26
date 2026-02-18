@@ -78,6 +78,15 @@ router.patch('/:id', requireAuth, requireRole('ADMIN'), async (req, res) => {
   const updates = parsed.data;
   const data: any = {};
 
+  const existingUser = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, role: true },
+  });
+
+  if (!existingUser) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
   if (updates.name) data.name = updates.name;
   if (updates.email) data.email = updates.email;
   if (updates.role) data.role = updates.role;
@@ -87,6 +96,22 @@ router.patch('/:id', requireAuth, requireRole('ADMIN'), async (req, res) => {
 
   if (Object.keys(data).length === 0) {
     return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  if (updates.role && updates.role !== existingUser.role) {
+    const isSelf = req.user?.id === existingUser.id;
+    const isDemotingAdmin = existingUser.role === 'ADMIN' && updates.role === 'USER';
+
+    if (isSelf && isDemotingAdmin) {
+      return res.status(400).json({ error: 'You cannot remove your own admin access' });
+    }
+
+    if (isDemotingAdmin) {
+      const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+      if (adminCount <= 1) {
+        return res.status(400).json({ error: 'At least one admin account is required' });
+      }
+    }
   }
 
   try {
@@ -117,6 +142,27 @@ router.patch('/:id', requireAuth, requireRole('ADMIN'), async (req, res) => {
 });
 
 router.delete('/:id', requireAuth, requireRole('ADMIN'), async (req, res) => {
+  const targetUser = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, role: true },
+  });
+
+  if (!targetUser) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  const isSelf = req.user?.id === targetUser.id;
+  if (isSelf) {
+    return res.status(400).json({ error: 'You cannot delete your own account' });
+  }
+
+  if (targetUser.role === 'ADMIN') {
+    const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+    if (adminCount <= 1) {
+      return res.status(400).json({ error: 'Cannot delete the last admin account' });
+    }
+  }
+
   try {
     await prisma.user.delete({ where: { id: req.params.id } });
     return res.json({ success: true });

@@ -162,6 +162,24 @@
   border-left-color: #4848e5;
 }
 
+.card-3d {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.card-3d:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.role-switch-active {
+  background: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  color: #fff;
+}
+
 /* Background grid overlay */
 .bg-grid-overlay {
   background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
