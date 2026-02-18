@@ -15,23 +15,23 @@ export const useRoleTheme = () => {
   return {
     isAdmin,
     // Primary colors
-    primary: isAdmin ? '#1e40af' : '#7c3aed',
-    primaryHover: isAdmin ? '#1e3a8a' : '#6d28d9',
-    primaryLight: isAdmin ? '#3b82f6' : '#a78bfa',
-    primaryGlow: isAdmin ? 'rgba(30, 64, 175, 0.3)' : 'rgba(124, 58, 237, 0.3)',
+    primary: isAdmin ? '#3B82F6' : '#8B5CF6',
+    primaryHover: isAdmin ? '#2563EB' : '#7C3AED',
+    primaryLight: isAdmin ? '#60A5FA' : '#A78BFA',
+    primaryGlow: isAdmin ? 'rgba(59, 130, 246, 0.25)' : 'rgba(139, 92, 246, 0.25)',
     // Background colors
-    cardBg: isAdmin ? 'bg-slate-800/60' : 'bg-[#1e1835]/60',
-    cardBorder: isAdmin ? 'border-slate-700' : 'border-[#2d2249]',
-    inputBg: isAdmin ? 'bg-slate-800' : 'bg-[#1e1835]',
+    cardBg: 'bg-[#111827]/70',
+    cardBorder: 'border-white/[0.06]',
+    inputBg: 'bg-[#111827]',
     // Text colors
-    textMuted: isAdmin ? 'text-slate-400' : 'text-[#a090cb]',
-    textPlaceholder: isAdmin ? 'placeholder:text-slate-500' : 'placeholder:text-[#a090cb]/50',
+    textMuted: 'text-[#A0AABF]',
+    textPlaceholder: 'placeholder:text-[#64748B]',
     // Focus ring
-    focusRing: isAdmin ? 'focus:ring-blue-500' : 'focus:ring-[#6e3df5]',
-    focusOffset: isAdmin ? 'focus:ring-offset-slate-900' : 'focus:ring-offset-[#151023]',
+    focusRing: isAdmin ? 'focus:ring-blue-500' : 'focus:ring-violet-500',
+    focusOffset: 'focus:ring-offset-[#0A0E1A]',
     // Gradient classes
-    gradientFrom: isAdmin ? '#1e40af' : '#6e3df5',
-    gradientTo: isAdmin ? '#3b82f6' : '#9f7afa',
+    gradientFrom: isAdmin ? '#1E3A8A' : '#4C1D95',
+    gradientTo: isAdmin ? '#3B82F6' : '#8B5CF6',
   };
 };
 
@@ -46,18 +46,20 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const theme = useRoleTheme();
     
     const variants = {
-      primary: theme.isAdmin
-        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-600/30'
-        : 'bg-[#6e3df5] text-white hover:bg-[#5b32cc] shadow-sm shadow-[#6e3df5]/30',
-      secondary: theme.isAdmin
-        ? 'bg-slate-700 text-white hover:bg-slate-600'
-        : 'bg-[#2d2249] text-white hover:bg-[#3d3259]',
-      outline: theme.isAdmin
-        ? 'border border-slate-600 bg-transparent hover:bg-slate-700/50 text-slate-300'
-        : 'border border-[#2d2249] bg-transparent hover:bg-[#2d2249]/50 text-[#a090cb]',
-      ghost: theme.isAdmin
-        ? 'hover:bg-slate-700 text-slate-300'
-        : 'hover:bg-[#2d2249] text-[#a090cb]',
+      primary: isAdmin
+        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-600/25'
+        : 'bg-violet-600 text-white hover:bg-violet-700 shadow-sm shadow-violet-600/25',
+      secondary: 'bg-[#1a2236] text-white hover:bg-[#222d44]',
+      outline: cn(
+        'border bg-transparent',
+        isAdmin
+          ? 'border-white/[0.08] hover:bg-blue-500/10 text-[#A0AABF]'
+          : 'border-white/[0.08] hover:bg-violet-500/10 text-[#A0AABF]'
+      ),
+      ghost: cn(
+        'hover:bg-white/[0.04]',
+        'text-[#A0AABF]'
+      ),
       danger: 'bg-red-500 text-white hover:bg-red-600',
     };
     const sizes = {
@@ -70,10 +72,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-150 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]',
-          theme.isAdmin 
-            ? 'focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900'
-            : 'focus:ring-[#6e3df5] focus:ring-offset-2 focus:ring-offset-[#151023]',
+          'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-150 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]',
+          isAdmin 
+            ? 'focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#0A0E1A]'
+            : 'focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-[#0A0E1A]',
           variants[variant],
           sizes[size],
           className
@@ -96,14 +98,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const theme = useRoleTheme();
     return (
       <div className="w-full">
-        {label && <label className={cn("block text-sm font-medium mb-1.5", theme.textMuted)}>{label}</label>}
+        {label && <label className={cn("block text-sm font-medium mb-1.5 text-[#A0AABF]")}>{label}</label>}
         <input
           ref={ref}
           className={cn(
-            'flex h-11 w-full rounded-lg border px-4 py-2.5 text-sm text-white transition-all duration-150 focus:outline-none focus:ring-2 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-11 w-full rounded-xl border px-4 py-2.5 text-sm text-[#E8E8FF] transition-all duration-150 focus:outline-none focus:ring-2 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50',
             theme.isAdmin
-              ? 'border-slate-600 bg-slate-800 placeholder:text-slate-500 focus:ring-blue-500'
-              : 'border-[#2d2249] bg-[#1e1835] placeholder:text-[#a090cb]/50 focus:ring-[#6e3df5]',
+              ? 'border-white/8 bg-[#111827] placeholder:text-[#64748B] focus:ring-blue-500'
+              : 'border-white/8 bg-[#111827] placeholder:text-[#64748B] focus:ring-violet-500',
             error && 'border-red-500 focus:ring-red-500',
             className
           )}
@@ -128,21 +130,21 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const theme = useRoleTheme();
     return (
       <div className="w-full">
-        {label && <label className={cn("block text-sm font-medium mb-1.5", theme.textMuted)}>{label}</label>}
+        {label && <label className={cn("block text-sm font-medium mb-1.5 text-[#A0AABF]")}>{label}</label>}
         <select
           ref={ref}
           className={cn(
-            'flex h-11 w-full rounded-lg border px-4 py-2.5 text-sm text-white transition-all duration-150 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-11 w-full rounded-xl border px-4 py-2.5 text-sm text-[#E8E8FF] transition-all duration-150 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50',
             theme.isAdmin
-              ? 'border-slate-600 bg-slate-800 focus:ring-blue-500'
-              : 'border-[#2d2249] bg-[#1e1835] focus:ring-[#6e3df5]',
+              ? 'border-white/8 bg-[#111827] focus:ring-blue-500'
+              : 'border-white/8 bg-[#111827] focus:ring-violet-500',
             error && 'border-red-500',
             className
           )}
           {...props}
         >
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value} className={theme.isAdmin ? "bg-slate-800" : "bg-[#1e1835]"}>
+            <option key={opt.value} value={opt.value} className="bg-[#111827]">
               {opt.label}
             </option>
           ))}
@@ -166,22 +168,19 @@ export const Card: React.FC<CardProps> = ({ className, children, variant = 'defa
   
   const variants = {
     default: cn(
-      'rounded-xl border backdrop-blur-md text-white shadow-lg transition-all duration-200',
-      theme.isAdmin 
-        ? 'bg-slate-800/70 border-slate-700/50 hover:shadow-xl hover:shadow-blue-900/10'
-        : 'bg-[#1e1835]/70 border-[#2d2249]/50 hover:shadow-xl hover:shadow-purple-900/10'
+      'rounded-2xl border backdrop-blur-xl text-white shadow-lg transition-all duration-200',
+      'bg-[#111827]/70 border-white/[0.06]',
+      'hover:shadow-xl',
+      theme.isAdmin ? 'hover:shadow-blue-900/5' : 'hover:shadow-violet-900/5'
     ),
     elevated: cn(
-      'rounded-xl border backdrop-blur-md text-white shadow-xl transition-all duration-200',
-      theme.isAdmin 
-        ? 'bg-slate-800/80 border-slate-600/50 shadow-blue-900/20'
-        : 'bg-[#1e1835]/80 border-[#3d3259]/50 shadow-purple-900/20'
+      'rounded-2xl border backdrop-blur-xl text-white shadow-xl transition-all duration-200',
+      'bg-[#111827]/80 border-white/[0.08]',
+      theme.isAdmin ? 'shadow-blue-900/10' : 'shadow-violet-900/10'
     ),
     outlined: cn(
-      'rounded-xl border-2 text-white transition-all duration-200',
-      theme.isAdmin 
-        ? 'bg-transparent border-slate-600 hover:border-slate-500'
-        : 'bg-transparent border-[#2d2249] hover:border-[#3d3259]'
+      'rounded-2xl border-2 text-white transition-all duration-200',
+      'bg-transparent border-white/[0.08] hover:border-white/[0.12]'
     ),
   };
   
@@ -212,15 +211,13 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'default', cla
   
   const styles = {
     default: theme.isAdmin 
-      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-      : 'bg-[#6e3df5]/20 text-[#a78bfa] border border-[#6e3df5]/30',
-    success: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
-    warning: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
-    danger: 'bg-red-500/20 text-red-400 border border-red-500/30',
-    info: 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30',
-    outline: theme.isAdmin
-      ? 'border border-slate-600 text-slate-300'
-      : 'border border-[#2d2249] text-[#a090cb]',
+      ? 'bg-blue-500/15 text-blue-400 border border-blue-500/25'
+      : 'bg-violet-500/15 text-violet-400 border border-violet-500/25',
+    success: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25',
+    warning: 'bg-amber-500/15 text-amber-400 border border-amber-500/25',
+    danger: 'bg-red-500/15 text-red-400 border border-red-500/25',
+    info: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/25',
+    outline: 'border border-white/[0.08] text-[#A0AABF]',
   };
   return (
     <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold', styles[variant], className)}>
@@ -245,9 +242,9 @@ const adminGradients = [
 ];
 
 const userGradients = [
-  'from-purple-500 to-violet-600',
-  'from-violet-500 to-purple-700',
-  'from-fuchsia-500 to-purple-600',
+  'from-violet-500 to-violet-700',
+  'from-violet-500 to-purple-600',
+  'from-fuchsia-500 to-violet-600',
   'from-purple-600 to-indigo-500',
 ];
 
@@ -267,7 +264,7 @@ export const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', className }) 
   
   return (
     <div className={cn(
-      `rounded-full bg-gradient-to-br ${gradients[gradientIndex]} flex items-center justify-center text-white font-bold shadow-md`,
+      `rounded-full bg-linear-to-br ${gradients[gradientIndex]} flex items-center justify-center text-white font-bold shadow-md`,
       sizes[size],
       className
     )}>
@@ -306,23 +303,17 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
       <div className={cn(
         "w-full rounded-2xl border shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col",
         sizes[size],
-        theme.isAdmin
-          ? 'bg-slate-800 border-slate-700 shadow-blue-900/20'
-          : 'bg-[#1e1835] border-[#2d2249] shadow-[#6e3df5]/10'
+        'bg-[#111827] border-white/8',
+        theme.isAdmin ? 'shadow-blue-900/10' : 'shadow-violet-900/10'
       )}>
         <div className={cn(
-          "flex items-center justify-between border-b p-5 flex-shrink-0",
-          theme.isAdmin ? "border-slate-700" : "border-[#2d2249]"
+          "flex items-center justify-between border-b p-5 shrink-0",
+          "border-white/6"
         )}>
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          <h3 className="text-lg font-semibold text-[#E8E8FF]">{title}</h3>
           <button 
             onClick={onClose} 
-            className={cn(
-              "p-2 rounded-lg transition-colors",
-              theme.isAdmin 
-                ? "text-slate-400 hover:text-white hover:bg-slate-700"
-                : "text-[#a090cb] hover:text-white hover:bg-[#2d2249]"
-            )}
+            className="p-2 rounded-lg transition-colors text-[#A0AABF] hover:text-white hover:bg-white/5"
           >
             x
           </button>
@@ -349,15 +340,15 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, c
     <Card variant="elevated" className={cn("p-6", className)}>
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <p className={cn("text-sm font-medium", theme.textMuted)}>{title}</p>
-          <p className="text-3xl font-bold text-white tracking-tight">{value}</p>
+          <p className={cn("text-sm font-medium text-[#A0AABF]")}>{title}</p>
+          <p className="text-3xl font-bold text-[#E8E8FF] tracking-tight">{value}</p>
           {trend && (
             <p className={cn(
               "text-sm font-medium flex items-center gap-1",
               trend.isPositive ? "text-emerald-400" : "text-red-400"
             )}>
               {trend.isPositive ? '+' : '-'} {Math.abs(trend.value)}%
-              <span className={cn("font-normal", theme.textMuted)}>vs last month</span>
+              <span className="font-normal text-[#A0AABF]">vs last month</span>
             </p>
           )}
         </div>
@@ -366,7 +357,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, c
             "p-3 rounded-xl",
             theme.isAdmin 
               ? "bg-blue-500/10 text-blue-400"
-              : "bg-purple-500/10 text-purple-400"
+              : "bg-violet-500/10 text-violet-400"
           )}>
             {icon}
           </div>
@@ -378,24 +369,16 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, c
 
 // Table components with role-based theming
 export const Table: React.FC<{ className?: string; children?: React.ReactNode }> = ({ className, children }) => {
-  const theme = useRoleTheme();
   return (
-    <div className={cn(
-      "w-full overflow-hidden rounded-xl border",
-      theme.isAdmin ? "border-slate-700" : "border-[#2d2249]"
-    )}>
+    <div className="w-full overflow-hidden rounded-xl border border-white/6">
       <table className={cn("w-full text-sm", className)}>{children}</table>
     </div>
   );
 };
 
 export const TableHeader: React.FC<{ className?: string; children?: React.ReactNode }> = ({ className, children }) => {
-  const theme = useRoleTheme();
   return (
-    <thead className={cn(
-      theme.isAdmin ? "bg-slate-800/50" : "bg-[#1e1835]/50",
-      className
-    )}>
+    <thead className={cn("bg-[#111827]/50", className)}>
       {children}
     </thead>
   );
@@ -406,13 +389,9 @@ export const TableBody: React.FC<{ className?: string; children?: React.ReactNod
 );
 
 export const TableRow: React.FC<{ className?: string; children?: React.ReactNode }> = ({ className, children }) => {
-  const theme = useRoleTheme();
   return (
     <tr className={cn(
-      "border-b transition-colors",
-      theme.isAdmin 
-        ? "border-slate-700/50 hover:bg-slate-800/30"
-        : "border-[#2d2249]/50 hover:bg-[#1e1835]/30",
+      "border-b transition-colors border-white/4 hover:bg-white/2",
       className
     )}>
       {children}
@@ -421,11 +400,9 @@ export const TableRow: React.FC<{ className?: string; children?: React.ReactNode
 };
 
 export const TableHead: React.FC<{ className?: string; children?: React.ReactNode }> = ({ className, children }) => {
-  const theme = useRoleTheme();
   return (
     <th className={cn(
-      "h-12 px-4 text-left align-middle font-semibold",
-      theme.isAdmin ? "text-slate-300" : "text-[#a090cb]",
+      "h-12 px-4 text-left align-middle font-semibold text-[#A0AABF]",
       className
     )}>
       {children}
@@ -434,7 +411,7 @@ export const TableHead: React.FC<{ className?: string; children?: React.ReactNod
 };
 
 export const TableCell: React.FC<{ className?: string; children?: React.ReactNode }> = ({ className, children }) => (
-  <td className={cn("p-4 align-middle text-white", className)}>{children}</td>
+  <td className={cn("p-4 align-middle text-[#E8E8FF]", className)}>{children}</td>
 );
 
 // Empty State component
@@ -451,15 +428,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
       {icon && (
-        <div className={cn(
-          "p-4 rounded-2xl mb-4",
-          theme.isAdmin ? "bg-slate-800 text-slate-400" : "bg-[#1e1835] text-[#a090cb]"
-        )}>
+        <div className="p-4 rounded-2xl mb-4 bg-[#111827] text-[#A0AABF]">
           {icon}
         </div>
       )}
-      <h3 className="text-lg font-semibold text-white mb-1">{title}</h3>
-      {description && <p className={cn("text-sm mb-4 max-w-sm", theme.textMuted)}>{description}</p>}
+      <h3 className="text-lg font-semibold text-[#E8E8FF] mb-1">{title}</h3>
+      {description && <p className="text-sm mb-4 max-w-sm text-[#A0AABF]">{description}</p>}
       {action}
     </div>
   );

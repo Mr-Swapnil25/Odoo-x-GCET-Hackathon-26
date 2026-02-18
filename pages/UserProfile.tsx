@@ -96,8 +96,8 @@ export const UserProfile = () => {
   if (!currentUser) return null;
 
   const themeColors = {
-    from: isAdmin ? '#1e40af' : '#7c3aed',
-    to: isAdmin ? '#3b82f6' : '#a78bfa',
+    from: isAdmin ? '#1E3A8A' : '#4C1D95',
+    to: isAdmin ? '#3B82F6' : '#8B5CF6',
   };
 
   const createdDate = currentUser.createdAt
@@ -159,7 +159,7 @@ export const UserProfile = () => {
                 </div>
               ) : (
                 <div className="flex items-center gap-2 justify-center sm:justify-start">
-                  <h1 className="text-2xl font-bold text-white">{currentUser.name}</h1>
+                  <h1 className="text-2xl font-bold text-[#E8E8FF]">{currentUser.name}</h1>
                   <button
                     onClick={() => { setIsEditingName(true); setEditName(currentUser.name); }}
                     className={cn("p-1.5 rounded-lg transition-all hover:bg-white/5", theme.textMuted, "hover:text-white")}
@@ -180,7 +180,7 @@ export const UserProfile = () => {
                   "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border animate-float",
                   isAdmin
                     ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
-                    : "bg-purple-500/15 text-purple-400 border-purple-500/30"
+                    : "bg-violet-500/15 text-violet-400 border-violet-500/30"
                 )}>
                   <Shield className="w-3.5 h-3.5" />
                   {isAdmin ? 'Administrator' : 'User'}
@@ -198,7 +198,7 @@ export const UserProfile = () => {
       {/* Activity Stats */}
       <StaggerContainer className="grid grid-cols-2 lg:grid-cols-4 gap-3" staggerDelay={0.08}>
         {[
-          { label: 'Total Tasks', value: activityStats.total, icon: <ClipboardList className="w-4 h-4" />, color: isAdmin ? 'text-blue-400' : 'text-purple-400' },
+          { label: 'Total Tasks', value: activityStats.total, icon: <ClipboardList className="w-4 h-4" />, color: isAdmin ? 'text-blue-400' : 'text-violet-400' },
           { label: 'Completed', value: activityStats.completed, icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-emerald-400' },
           { label: 'In Progress', value: activityStats.inProgress, icon: <Clock className="w-4 h-4" />, color: 'text-blue-400' },
           { label: 'Overdue', value: activityStats.overdue, icon: <AlertTriangle className="w-4 h-4" />, color: 'text-red-400' },
@@ -208,7 +208,7 @@ export const UserProfile = () => {
               <div className="flex items-center gap-3">
                 <span className={stat.color}>{stat.icon}</span>
                 <div>
-                  <p className="text-xl font-bold text-white"><CountUpNumber end={stat.value} /></p>
+                  <p className="text-xl font-bold text-[#E8E8FF]"><CountUpNumber end={stat.value} /></p>
                   <p className={cn("text-[10px]", theme.textMuted)}>{stat.label}</p>
                 </div>
               </div>
@@ -220,8 +220,8 @@ export const UserProfile = () => {
       {/* Account Details */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
         <Card>
-          <div className={cn("px-6 py-4 border-b", theme.isAdmin ? "border-slate-800" : "border-[#2d2249]")}>
-            <h2 className="text-lg font-semibold text-white">Account Details</h2>
+          <div className={cn("px-6 py-4 border-b border-white/6")}>
+            <h2 className="text-lg font-semibold text-[#E8E8FF]">Account Details</h2>
           </div>
           <div className="p-6 space-y-4">
             {[
@@ -230,11 +230,11 @@ export const UserProfile = () => {
               { icon: <Shield className="w-4 h-4" />, label: 'Role', value: isAdmin ? 'Administrator' : 'User' },
               { icon: <Calendar className="w-4 h-4" />, label: 'Member Since', value: createdDate },
             ].map((row) => (
-              <div key={row.label} className={cn("flex items-center gap-4 py-2.5 px-3 -mx-3 rounded-lg transition-colors hover:bg-white/[0.03] group")}>
+              <div key={row.label} className={cn("flex items-center gap-4 py-2.5 px-3 -mx-3 rounded-lg transition-colors hover:bg-white/3 group")}>
                 <span className={cn("p-2 rounded-lg transition-colors group-hover:bg-white/5", theme.textMuted)}>{row.icon}</span>
                 <div className="flex-1">
                   <p className={cn("text-[10px] uppercase tracking-wider", theme.textMuted)}>{row.label}</p>
-                  <p className="text-sm font-medium text-white">{row.value}</p>
+                  <p className="text-sm font-medium text-[#E8E8FF]">{row.value}</p>
                 </div>
               </div>
             ))}
@@ -249,14 +249,14 @@ export const UserProfile = () => {
             onClick={() => setPasswordOpen(!passwordOpen)}
             className={cn(
               "w-full flex items-center justify-between px-6 py-4 text-left transition-colors",
-              "hover:bg-white/[0.03]"
+              "hover:bg-white/3"
             )}
           >
             <div className="flex items-center gap-3">
-              <span className={cn("p-2 rounded-lg", theme.isAdmin ? "bg-blue-500/10 text-blue-400" : "bg-purple-500/10 text-purple-400")}>
+              <span className={cn("p-2 rounded-lg", theme.isAdmin ? "bg-blue-500/15 text-blue-400" : "bg-violet-500/15 text-violet-400")}>
                 <Lock className="w-4 h-4" />
               </span>
-              <h2 className="text-lg font-semibold text-white">Change Password</h2>
+              <h2 className="text-lg font-semibold text-[#E8E8FF]">Change Password</h2>
             </div>
             <ChevronDown className={cn("w-5 h-5 transition-transform duration-300", theme.textMuted, passwordOpen && "rotate-180")} />
           </button>
@@ -270,10 +270,10 @@ export const UserProfile = () => {
                 transition={{ duration: 0.3, ease: 'easeOut' }}
                 className="overflow-hidden"
               >
-                <form onSubmit={handleChangePassword} className={cn("p-6 pt-2 border-t space-y-4", theme.isAdmin ? "border-slate-800" : "border-[#2d2249]")}>
+                <form onSubmit={handleChangePassword} className={cn("p-6 pt-2 border-t space-y-4 border-white/6")}>
                   {/* Current Password */}
                   <div>
-                    <label className="block text-sm font-medium text-white mb-1.5">Current Password</label>
+                    <label className="block text-sm font-medium text-[#E8E8FF] mb-1.5">Current Password</label>
                     <div className="relative">
                       <Input
                         type={showCurrent ? 'text' : 'password'}
@@ -293,7 +293,7 @@ export const UserProfile = () => {
 
                   {/* New Password */}
                   <div>
-                    <label className="block text-sm font-medium text-white mb-1.5">New Password</label>
+                    <label className="block text-sm font-medium text-[#E8E8FF] mb-1.5">New Password</label>
                     <div className="relative">
                       <Input
                         type={showNew ? 'text' : 'password'}
@@ -313,7 +313,7 @@ export const UserProfile = () => {
                     {newPassword.length > 0 && (
                       <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="mt-2">
                         <div className="flex items-center gap-2 mb-1">
-                          <div className={cn("h-1.5 flex-1 rounded-full overflow-hidden", theme.isAdmin ? "bg-slate-800" : "bg-[#1e1835]")}>
+                          <div className={cn("h-1.5 flex-1 rounded-full overflow-hidden bg-[#111827]")}>
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: `${(passwordStrength.level / 4) * 100}%` }}
@@ -332,7 +332,7 @@ export const UserProfile = () => {
 
                   {/* Confirm Password */}
                   <div>
-                    <label className="block text-sm font-medium text-white mb-1.5">Confirm New Password</label>
+                    <label className="block text-sm font-medium text-[#E8E8FF] mb-1.5">Confirm New Password</label>
                     <Input
                       type="password"
                       value={confirmPassword}

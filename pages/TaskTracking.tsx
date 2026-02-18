@@ -17,9 +17,9 @@ import toast from 'react-hot-toast';
 type ViewMode = 'table' | 'cards';
 
 const statusColors: Record<TaskStatus, { bg: string; text: string; border: string }> = {
-  PENDING: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
-  IN_PROGRESS: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
-  COMPLETED: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+  PENDING: { bg: 'bg-amber-500/15', text: 'text-amber-400', border: 'border-amber-500/30' },
+  IN_PROGRESS: { bg: 'bg-blue-500/15', text: 'text-blue-400', border: 'border-blue-500/30' },
+  COMPLETED: { bg: 'bg-emerald-500/15', text: 'text-emerald-400', border: 'border-emerald-500/30' },
 };
 
 const priorityColors: Record<string, string> = {
@@ -104,7 +104,7 @@ export const TaskTracking = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">{isAdmin ? 'All Tasks' : 'My Tasks'}</h1>
+          <h1 className="text-2xl font-bold text-[#E8E8FF]">{isAdmin ? 'All Tasks' : 'My Tasks'}</h1>
           <p className={cn("text-sm mt-1", theme.textMuted)}>
             {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} found
           </p>
@@ -138,16 +138,16 @@ export const TaskTracking = () => {
 
           {/* View Toggle */}
           <div className={cn(
-            "flex items-center rounded-lg border p-0.5",
-            theme.isAdmin ? "bg-slate-800 border-slate-700" : "bg-[#1a1625] border-[#2d2249]"
+            "flex items-center rounded-xl border p-0.5",
+            "bg-[#111827] border-white/6"
           )}>
             <button
               onClick={() => setViewMode('table')}
               className={cn(
-                "p-2 rounded-md transition-all",
+                "p-2 rounded-lg transition-all",
                 viewMode === 'table'
-                  ? theme.isAdmin ? "bg-blue-600 text-white" : "bg-purple-600 text-white"
-                  : theme.textMuted + " hover:text-white"
+                  ? theme.isAdmin ? "bg-blue-600 text-white" : "bg-violet-600 text-white"
+                  : theme.textMuted + " hover:text-[#E8E8FF]"
               )}
             >
               <LayoutList className="w-4 h-4" />
@@ -155,10 +155,10 @@ export const TaskTracking = () => {
             <button
               onClick={() => setViewMode('cards')}
               className={cn(
-                "p-2 rounded-md transition-all",
+                "p-2 rounded-lg transition-all",
                 viewMode === 'cards'
-                  ? theme.isAdmin ? "bg-blue-600 text-white" : "bg-purple-600 text-white"
-                  : theme.textMuted + " hover:text-white"
+                  ? theme.isAdmin ? "bg-blue-600 text-white" : "bg-violet-600 text-white"
+                  : theme.textMuted + " hover:text-[#E8E8FF]"
               )}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -197,13 +197,13 @@ export const TaskTracking = () => {
                         exit={{ opacity: 0, x: -20 }}
                         className={cn(
                           "table-row-hover border-b transition-all",
-                          theme.isAdmin ? "border-slate-800 hover:bg-slate-800/50" : "border-[#1e1835] hover:bg-[#1e1835]/50",
+                          "border-white/6 hover:bg-white/3",
                           flashTaskId === task.id && "bg-emerald-500/10"
                         )}
                       >
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <span className="text-white font-medium">{task.title}</span>
+                            <span className="text-[#E8E8FF] font-medium">{task.title}</span>
                             {dueInfo.urgent && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
                           </div>
                         </TableCell>
@@ -216,7 +216,7 @@ export const TaskTracking = () => {
                           <Select
                             value={task.status}
                             onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                            className="text-xs w-[130px]"
+                            className="text-xs w-32.5"
                           >
                             <option value="PENDING">Pending</option>
                             <option value="IN_PROGRESS">In Progress</option>
@@ -274,7 +274,7 @@ export const TaskTracking = () => {
                   <GlassCard elevation="medium" className={cn("p-5 border-l-4", priorityColors[task.priority] || '')}>
                     {/* Card Header */}
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className={cn("text-sm font-semibold text-white line-clamp-2", completed && "line-through opacity-60")}>
+                      <h3 className={cn("text-sm font-semibold text-[#E8E8FF] line-clamp-2", completed && "line-through opacity-60")}>
                         {task.title}
                       </h3>
                       <span className={cn("flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full border", scolor.bg, scolor.text, scolor.border)}>
@@ -330,7 +330,7 @@ export const TaskTracking = () => {
                         <Select
                           value={task.status}
                           onChange={(e) => handleStatusChange(task, e.target.value as TaskStatus)}
-                          className="text-[10px] w-[110px] py-1"
+                          className="text-[10px] w-27.5 py-1"
                         >
                           <option value="PENDING">Pending</option>
                           <option value="IN_PROGRESS">In Progress</option>
@@ -377,12 +377,12 @@ export const TaskTracking = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                   className={cn(
-                    "p-3 rounded-lg border",
-                    theme.isAdmin ? "bg-slate-800/50 border-slate-700" : "bg-[#1e1835]/50 border-[#2d2249]"
+                    "p-3 rounded-xl border",
+                    "bg-[#111827]/50 border-white/6"
                   )}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-white">{c.user?.name || 'User'}</span>
+                    <span className="text-sm font-medium text-[#E8E8FF]">{c.user?.name || 'User'}</span>
                     <span className={cn("text-[10px]", theme.textMuted)}>
                       {c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}
                     </span>

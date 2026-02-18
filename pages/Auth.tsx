@@ -68,15 +68,15 @@ export const Login = () => {
   };
 
   return (
-    <div className="fixed inset-0 flex w-full bg-[#0F172A] text-white font-sans antialiased overflow-hidden">
+    <div className="fixed inset-0 flex w-full bg-[#0A0E1A] text-white font-sans antialiased overflow-hidden">
       {/* Left Panel: Brand & Visuals */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#0c0a1d] overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#0A0E1A] overflow-hidden">
         {/* Dynamic Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a1333] via-[#0f0d1f] to-[#0c0a1d] z-0" />
+        <div className="absolute inset-0 bg-linear-to-br from-[#111827] via-[#0A0E1A] to-[#0A0E1A] z-0" />
         
         {/* Abstract Blobs */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/15 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-125 h-125 bg-violet-600/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-150 h-150 bg-violet-600/10 rounded-full blur-[120px]" />
         
         {/* Grid Overlay */}
         <div className="absolute inset-0 z-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#a78bfa 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
@@ -85,10 +85,10 @@ export const Login = () => {
         <div className="relative z-10 flex flex-col h-full p-12 justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-[#8359f8] to-cyan-400 flex items-center justify-center shadow-lg shadow-[#8359f8]/20">
+            <div className="w-10 h-10 rounded-lg bg-linear-to-tr from-[#4C1D95] to-cyan-400 flex items-center justify-center shadow-lg shadow-[#8B5CF6]/20">
               <Infinity className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-white">Task Manager</span>
+            <span className="text-2xl font-bold tracking-tight text-[#E8E8FF]">TaskFlow</span>
           </div>
           
           {/* Ripple Loader Animation */}
@@ -97,7 +97,7 @@ export const Login = () => {
               icon={<Infinity />}
               size={280}
               duration={2.5}
-              logoColor="#8359f8"
+              logoColor="#8B5CF6"
             />
           </div>
           
@@ -105,9 +105,9 @@ export const Login = () => {
           <div className="space-y-4 max-w-lg">
             <h1 className="text-4xl md:text-5xl font-bold leading-tight tracking-tight">
               Every task, <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">perfectly aligned.</span>
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-purple-400">perfectly aligned.</span>
             </h1>
-            <p className="text-slate-400 text-lg font-light">
+            <p className="text-[#A0AABF] text-lg font-light">
               Keep teams aligned with clear priorities, deadlines, and visibility.
             </p>
           </div>
@@ -115,7 +115,7 @@ export const Login = () => {
       </div>
 
       {/* Right Panel: Login Form */}
-      <div className="w-full lg:w-1/2 relative flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6 bg-[#0c0a1d] overflow-y-auto">
+      <div className="w-full lg:w-1/2 relative flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6 bg-[#0A0E1A] overflow-y-auto">
         {/* Wave Background */}
         <WaveBackground 
           colorTheme="auth"
@@ -123,16 +123,16 @@ export const Login = () => {
         />
         
         {/* Gradient Glow behind form */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-violet-600/10 rounded-full blur-[100px] z-0 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-100 h-100 bg-violet-600/10 rounded-full blur-[100px] z-0 pointer-events-none" />
         
         {/* Login Card */}
         <div 
-          className="relative z-10 w-full max-w-[420px] rounded-2xl p-8 sm:p-10 flex flex-col gap-6"
+          className="relative z-10 w-full max-w-105 rounded-2xl p-8 sm:p-10 flex flex-col gap-6"
           style={{
-            background: 'rgba(20, 16, 40, 0.6)',
+            background: 'rgba(17, 24, 39, 0.6)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(139, 92, 246, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.05)'
           }}
         >
@@ -160,12 +160,12 @@ export const Login = () => {
                 type="email"
                 id="email"
                 placeholder="Email address"
-                className="peer block w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-11 pb-2.5 pt-5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 appearance-none transition-all duration-300 placeholder-transparent outline-none"
+                className="peer block w-full rounded-xl border border-white/8 bg-[#111827]/80 px-4 pl-11 pb-2.5 pt-5 text-sm text-[#E8E8FF] focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 appearance-none transition-all duration-300 placeholder-transparent outline-none"
                 {...register('email')}
               />
               <label 
                 htmlFor="email"
-                className="absolute left-11 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-sm text-violet-300/60 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-violet-400 cursor-text"
+                className="absolute left-11 top-4 z-10 origin-left -translate-y-2.5 scale-75 transform text-sm text-[#A0AABF]/60 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-violet-400 cursor-text"
               >
                 Email address
               </label>
@@ -179,12 +179,12 @@ export const Login = () => {
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 placeholder="Password"
-                className="peer block w-full rounded-xl border border-violet-500/20 bg-[#1a1333]/80 px-4 pl-11 pr-10 pb-2.5 pt-5 text-sm text-white focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 appearance-none transition-all duration-300 placeholder-transparent outline-none"
+                className="peer block w-full rounded-xl border border-white/8 bg-[#111827]/80 px-4 pl-11 pr-10 pb-2.5 pt-5 text-sm text-[#E8E8FF] focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 appearance-none transition-all duration-300 placeholder-transparent outline-none"
                 {...register('password')}
               />
               <label 
                 htmlFor="password"
-                className="absolute left-11 top-4 z-10 origin-[0] -translate-y-2.5 scale-75 transform text-sm text-violet-300/60 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-violet-400 cursor-text"
+                className="absolute left-11 top-4 z-10 origin-left -translate-y-2.5 scale-75 transform text-sm text-[#A0AABF]/60 duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-2.5 peer-focus:scale-75 peer-focus:text-violet-400 cursor-text"
               >
                 Password
               </label>
@@ -225,7 +225,7 @@ export const Login = () => {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl text-white font-semibold text-sm shadow-lg shadow-violet-500/20 tracking-wide flex items-center justify-center gap-2 mt-4 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-violet-500/30 hover:scale-[1.01] bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500"
+              className="w-full py-3.5 px-4 rounded-xl text-white font-semibold text-sm shadow-lg shadow-violet-500/20 tracking-wide flex items-center justify-center gap-2 mt-4 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-violet-500/30 hover:scale-[1.01] bg-linear-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500"
             >
               <span>{loading ? 'Signing in...' : 'Sign In'}</span>
               {!loading && <ArrowRight className="w-4 h-4" />}
@@ -244,7 +244,7 @@ export const Login = () => {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading}
-            className="w-full py-3 px-4 rounded-xl bg-[#1a1333]/80 border border-violet-500/20 text-white font-medium text-sm flex items-center justify-center gap-3 transition-all duration-300 hover:bg-[#1a1333] hover:border-violet-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 px-4 rounded-xl bg-[#111827]/80 border border-white/8 text-[#E8E8FF] font-medium text-sm flex items-center justify-center gap-3 transition-all duration-300 hover:bg-[#111827] hover:border-white/15 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {googleLoading ? (
               <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -272,7 +272,7 @@ export const Login = () => {
           <div className="w-6 h-6 rounded bg-violet-600 flex items-center justify-center">
             <Infinity className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-sm font-semibold text-violet-300">Task Manager</span>
+          <span className="text-sm font-semibold text-violet-300">TaskFlow</span>
         </div>
       </div>
     </div>

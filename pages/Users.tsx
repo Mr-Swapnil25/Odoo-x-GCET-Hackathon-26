@@ -60,7 +60,7 @@ export const Users = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">User Management</h1>
+          <h1 className="text-2xl font-bold text-[#E8E8FF]">User Management</h1>
           <p className={cn("text-sm mt-1", theme.textMuted)}>{users.length} team member{users.length !== 1 ? 's' : ''}</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} variant={showForm ? 'secondary' : 'primary'}>
@@ -81,7 +81,7 @@ export const Users = () => {
               <form onSubmit={handleCreate} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                    <label className="block text-sm font-medium text-white mb-1.5">Full Name *</label>
+                    <label className="block text-sm font-medium text-[#E8E8FF] mb-1.5">Full Name *</label>
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
@@ -90,7 +90,7 @@ export const Users = () => {
                     />
                   </motion.div>
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-                    <label className="block text-sm font-medium text-white mb-1.5">Email *</label>
+                    <label className="block text-sm font-medium text-[#E8E8FF] mb-1.5">Email *</label>
                     <Input
                       type="email"
                       value={formData.email}
@@ -100,7 +100,7 @@ export const Users = () => {
                     />
                   </motion.div>
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                    <label className="block text-sm font-medium text-white mb-1.5">Password *</label>
+                    <label className="block text-sm font-medium text-[#E8E8FF] mb-1.5">Password *</label>
                     <Input
                       type="password"
                       value={formData.password}
@@ -110,7 +110,7 @@ export const Users = () => {
                     />
                   </motion.div>
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-                    <label className="block text-sm font-medium text-white mb-1.5">Role</label>
+                    <label className="block text-sm font-medium text-[#E8E8FF] mb-1.5">Role</label>
                     <Select
                       value={formData.role}
                       onChange={(e) => setFormData(p => ({ ...p, role: e.target.value as Role }))}
@@ -152,8 +152,8 @@ export const Users = () => {
                           className={cn(
                             "w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg shrink-0",
                             user.role === 'ADMIN'
-                              ? "bg-gradient-to-br from-blue-500 to-blue-700"
-                              : "bg-gradient-to-br from-purple-500 to-purple-700"
+                              ? "bg-linear-to-br from-blue-500 to-blue-700"
+                              : "bg-linear-to-br from-violet-500 to-violet-700"
                           )}
                         >
                           {user.name.charAt(0).toUpperCase()}
@@ -161,7 +161,7 @@ export const Users = () => {
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-white truncate">{user.name}</h3>
+                          <h3 className="text-sm font-semibold text-[#E8E8FF] truncate">{user.name}</h3>
                           <p className={cn("text-xs mt-0.5 truncate flex items-center gap-1", theme.textMuted)}>
                             <Mail className="w-3 h-3 shrink-0" />
                             {user.email}
@@ -174,7 +174,7 @@ export const Users = () => {
                               className={cn(
                                 "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium border transition-all",
                                 user.role === 'USER'
-                                  ? "bg-purple-500/20 text-purple-400 border-purple-500/40"
+                                  ? "bg-violet-500/20 text-violet-400 border-violet-500/40"
                                   : cn("border-transparent", theme.textMuted, "hover:bg-white/5")
                               )}
                             >

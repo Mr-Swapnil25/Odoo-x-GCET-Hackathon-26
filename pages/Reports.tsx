@@ -72,7 +72,7 @@ function AnimatedDonutChart({ segments, size = 200 }: { segments: DonutSegment[]
             r={radius}
             fill="none"
             strokeWidth={strokeWidth}
-            className="stroke-white/[0.05]"
+            className="stroke-white/5"
           />
 
           {/* Segments */}
@@ -98,7 +98,7 @@ function AnimatedDonutChart({ segments, size = 200 }: { segments: DonutSegment[]
 
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-white">
+          <span className="text-3xl font-bold text-[#E8E8FF]">
             <CountUpNumber end={total} duration={1000} />
           </span>
           <span className={cn("text-xs", theme.textMuted)}>Total Tasks</span>
@@ -115,7 +115,7 @@ function AnimatedDonutChart({ segments, size = 200 }: { segments: DonutSegment[]
             />
             <span className={cn("text-xs", theme.textMuted)}>
               {arc.label}
-              <span className="ml-1 text-white font-medium">{arc.value}</span>
+              <span className="ml-1 text-[#E8E8FF] font-medium">{arc.value}</span>
               <span className="ml-0.5 opacity-60">({arc.percentage}%)</span>
             </span>
           </div>
@@ -181,17 +181,17 @@ export const Reports = () => {
   }
 
   const colorMap: Record<string, { bg: string; text: string }> = {
-    blue: { bg: 'bg-blue-500/10', text: 'text-blue-400' },
-    emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
-    amber: { bg: 'bg-amber-500/10', text: 'text-amber-400' },
-    red: { bg: 'bg-red-500/10', text: 'text-red-400' },
+    blue: { bg: 'bg-blue-500/15', text: 'text-blue-400' },
+    emerald: { bg: 'bg-emerald-500/15', text: 'text-emerald-400' },
+    amber: { bg: 'bg-amber-500/15', text: 'text-amber-400' },
+    red: { bg: 'bg-red-500/15', text: 'text-red-400' },
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Analytics & Reports</h1>
+        <h1 className="text-2xl font-bold text-[#E8E8FF]">Analytics & Reports</h1>
         <p className={cn("text-sm mt-1", theme.textMuted)}>
           Task overview and performance metrics
         </p>
@@ -208,7 +208,7 @@ export const Reports = () => {
                   <div className="flex items-start justify-between mb-2">
                     <span className={cn("p-2 rounded-lg", colors.bg, colors.text)}>{card.icon}</span>
                   </div>
-                  <p className="text-2xl font-bold text-white tracking-tight">
+                  <p className="text-2xl font-bold text-[#E8E8FF] tracking-tight">
                     <CountUpNumber end={card.value} suffix={card.suffix} />
                   </p>
                   <p className={cn("text-xs mt-1", theme.textMuted)}>{card.title}</p>
@@ -238,7 +238,7 @@ export const Reports = () => {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Overdue Tasks</h2>
+                <h2 className="text-lg font-semibold text-[#E8E8FF]">Overdue Tasks</h2>
                 {reports.overdueTasks && reports.overdueTasks.length > 0 && (
                   <Badge variant="danger">{reports.overdueTasks.length} tasks</Badge>
                 )}
@@ -274,7 +274,7 @@ export const Reports = () => {
                           <TableCell>
                             <div className="flex items-center gap-2">
                               {isSevere && <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />}
-                              <span className="text-white font-medium">{task.title}</span>
+                              <span className="text-[#E8E8FF] font-medium">{task.title}</span>
                             </div>
                           </TableCell>
                           <TableCell>{task.assignedUser?.name || 'Unassigned'}</TableCell>

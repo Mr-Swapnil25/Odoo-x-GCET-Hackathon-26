@@ -39,9 +39,10 @@ function App() {
         position="top-right" 
         toastOptions={{
           style: {
-            background: '#1e1b27',
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: '#111827',
+            color: '#E8E8FF',
+            border: '1px solid rgba(255,255,255,0.08)',
+            backdropFilter: 'blur(12px)',
           },
           success: {
             iconTheme: {
